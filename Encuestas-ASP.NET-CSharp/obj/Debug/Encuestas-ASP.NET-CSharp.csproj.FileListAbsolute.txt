@@ -73,7 +73,6 @@ C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuesta
 C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\bin\System.Diagnostics.DiagnosticSource.xml
 C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\bin\Microsoft.AspNet.TelemetryCorrelation.xml
 C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
-C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\obj\Debug\Encuestas-ASP.NET-CSharp.csprojAssemblyReference.cache
 C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\obj\Debug\Encuestas-ASP.NET-CSharp.csproj.CoreCompileInputs.cache
 C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\obj\Debug\Encuestas-ASP.NET-CSharp.csproj.CopyComplete
 C:\Users\Carlos\Documents\VisualStudioProjects\Encuestas-ASP.NET-CSharp\Encuestas-ASP.NET-CSharp\obj\Debug\Encuestas-ASP.NET-CSharp.dll
