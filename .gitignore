@@ -1,0 +1,6 @@
+#Archivos
+*.orig
+
+#Carpetas
+[Bb]in/
+[Oo]bj/
