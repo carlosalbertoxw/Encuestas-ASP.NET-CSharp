@@ -10,7 +10,7 @@ namespace Datos
         private String user = "root";
         private String password = "qwerty";
 
-        public MySqlConnection openConnection()
+        public MySqlConnection OpenConnection()
         {
             MySqlConnection connection;
             try
@@ -27,7 +27,7 @@ namespace Datos
             return connection;
         }
 
-        public void closeConnection(MySqlConnection connection)
+        public void CloseConnection(MySqlConnection connection)
         {
             try
             {

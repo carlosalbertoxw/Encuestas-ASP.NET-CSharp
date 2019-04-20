@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - My ASP.NET Application</title>
+    <title>@ViewBag.Title - @ViewBag.ApplicationName</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar navbar-default navbar-fixed-top">
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -16,25 +16,42 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+                @if (HttpContext.Current.Session["id"] != null)
+                {
+                    @Html.ActionLink((string)ViewBag.ApplicationName, "Index", "Poll", new { area = "" }, new { @class = "navbar-brand" })
+                }
+                else
+                {
+                    @Html.ActionLink((string)ViewBag.ApplicationName, "Index", "User", new { area = "" }, new { @class = "navbar-brand" })
+                }
             </div>
-            <div class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                    <li>@Html.ActionLink("Home", "Index", "Home")</li>
-                    <li>@Html.ActionLink("About", "About", "Home")</li>
-                    <li>@Html.ActionLink("Contact", "Contact", "Home")</li>
-                </ul>
-            </div>
+            @if (HttpContext.Current.Session["id"] != null)
+            {
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-left">
+                        <li>@Html.ActionLink("Agregar encuesta", "AddPoll", "Poll")</li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Usuario <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li>@Html.ActionLink("Ver perfil", "Profile", "User")</li>
+                                <li>@Html.ActionLink("Editar perfil", "EditProfile", "User")</li>
+                                <li>@Html.ActionLink("Cambiar usuario", "ChangeUser", "User")</li>
+                                <li>@Html.ActionLink("Cambiar correo electrónico", "ChangeEmail", "User")</li>
+                                <li>@Html.ActionLink("Cambiar contraseña", "ChangePassword", "User")</li>
+                                <li>@Html.ActionLink("Borrar cuenta", "DeleteAccount", "User")</li>
+                                <li>@Html.ActionLink("Cerrar sesión", "CloseSession", "User")</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            }
         </div>
     </div>
     <div class="container body-content">
         @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
-        </footer>
     </div>
-
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)

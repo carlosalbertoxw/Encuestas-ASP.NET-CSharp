@@ -61,7 +61,7 @@ CREATE TABLE `a_polls` (
   PRIMARY KEY (`p_key`),
   KEY `p_user_key` (`p_user_key`),
   CONSTRAINT `a_polls_ibfk_1` FOREIGN KEY (`p_user_key`) REFERENCES `a_users_profiles` (`u_p_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -70,6 +70,7 @@ CREATE TABLE `a_polls` (
 
 LOCK TABLES `a_polls` WRITE;
 /*!40000 ALTER TABLE `a_polls` DISABLE KEYS */;
+INSERT INTO `a_polls` VALUES (1,'Prueba','prueba',1,2);
 /*!40000 ALTER TABLE `a_polls` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -86,7 +87,7 @@ CREATE TABLE `a_users` (
   `u_password` varchar(500) NOT NULL,
   PRIMARY KEY (`u_key`),
   UNIQUE KEY `u_email` (`u_email`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,7 +96,7 @@ CREATE TABLE `a_users` (
 
 LOCK TABLES `a_users` WRITE;
 /*!40000 ALTER TABLE `a_users` DISABLE KEYS */;
-INSERT INTO `a_users` VALUES (2,'c@c.c','b1b3773a05c0ed0176787a4f1574ff0075f7521e');
+INSERT INTO `a_users` VALUES (2,'c@c.c','b1b3773a05c0ed0176787a4f1574ff0075f7521e'),(4,'a@a.a','7c4a8d09ca3762af61e59520943dc26494f8941b');
 /*!40000 ALTER TABLE `a_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -108,10 +109,10 @@ DROP TABLE IF EXISTS `a_users_profiles`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `a_users_profiles` (
   `u_p_key` int(11) NOT NULL,
-  `u_p_user` varchar(25) NOT NULL,
+  `u_p_user_name` varchar(25) NOT NULL,
   `u_p_name` varchar(50) NOT NULL,
   PRIMARY KEY (`u_p_key`),
-  UNIQUE KEY `u_p_user` (`u_p_user`),
+  UNIQUE KEY `u_p_user` (`u_p_user_name`),
   CONSTRAINT `a_users_profiles_ibfk_1` FOREIGN KEY (`u_p_key`) REFERENCES `a_users` (`u_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -122,7 +123,7 @@ CREATE TABLE `a_users_profiles` (
 
 LOCK TABLES `a_users_profiles` WRITE;
 /*!40000 ALTER TABLE `a_users_profiles` DISABLE KEYS */;
-INSERT INTO `a_users_profiles` VALUES (2,'c','C');
+INSERT INTO `a_users_profiles` VALUES (2,'c','C'),(4,'usuario4','Usuario4');
 /*!40000 ALTER TABLE `a_users_profiles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -143,4 +144,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-03-17 15:53:15
+-- Dump completed on 2019-04-20 13:30:41
