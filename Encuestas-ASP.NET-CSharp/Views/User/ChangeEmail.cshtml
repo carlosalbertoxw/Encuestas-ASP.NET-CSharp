@@ -1,0 +1,32 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
+            @ViewBag.Message
+        </div>
+        <div class="row">
+            <div class="col-md-offset-3 col-md-6 col-sm-12">
+                <h4 class="text-center">@ViewBag.Title</h4>
+                <form class="form-horizontal" action="@ViewBag.Path" method="post" onsubmit="return change_email(this)">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="email">Correo electrónico</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" value="@HttpContext.Current.Session["email"]" type="text" name="email" id="email" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="password">Contraseña</label>
+                        <div class="col-sm-8"><input class="form-control" type="password" name="password" id="password" maxlength="50"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button class="btn btn-primary" type="submit">Enviar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section scripts {
+    <script src="~/Scripts/session-validations.js"></script>
+}

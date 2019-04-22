@@ -31,7 +31,10 @@ namespace Datos
         {
             try
             {
-                connection.Close();
+                if (connection != null)
+                {
+                    connection.Close();
+                }
             }
             catch (Exception ex)
             {

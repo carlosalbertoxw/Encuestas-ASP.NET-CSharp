@@ -163,10 +163,17 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\User\Index.cshtml" />
     <Content Include="Views\Poll\Index.cshtml" />
+    <Content Include="Views\User\EditProfile.cshtml" />
+    <Content Include="Views\User\ChangeUser.cshtml" />
+    <Content Include="Views\User\ChangeEmail.cshtml" />
+    <Content Include="Views\User\ChangePassword.cshtml" />
+    <Content Include="Views\User\DeleteAccount.cshtml" />
+    <Content Include="Views\User\Profile.cshtml" />
+    <Content Include="Views\Poll\Add.cshtml" />
+    <Content Include="Views\Error404.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />

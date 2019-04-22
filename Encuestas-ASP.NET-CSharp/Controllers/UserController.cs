@@ -1,5 +1,6 @@
 ﻿using Data;
 using Utilities;
+using Model;
 using System;
 using System.Web.Mvc;
 using System.Diagnostics;
@@ -15,19 +16,351 @@ namespace Encuestas_ASP.NET_CSharp.Controllers
             userDTO = new UserDTO();
         }
 
-        [HttpGet]
-        public ActionResult Index()
+        [HttpPost]
+        public ActionResult DeleteAccount(String password)
         {
-            if (System.Web.HttpContext.Current.Session["id"] == null)
+            if (System.Web.HttpContext.Current.Session["id"] != null)
             {
+                if (!password.Equals("") && password.Length <= 50)
+                {
+                    var user = userDTO.GetUserPassword((Int32)System.Web.HttpContext.Current.Session["id"]);
+                    if (user.Password.Equals(Encryption.GetSHA1(password)))
+                    {
+                        if (userDTO.DeleteAccount((Int32)System.Web.HttpContext.Current.Session["id"]))
+                        {
+                            System.Web.HttpContext.Current.Session["userName"] = null;
+                            System.Web.HttpContext.Current.Session["name"] = null;
+                            System.Web.HttpContext.Current.Session["email"] = null;
+                            System.Web.HttpContext.Current.Session["id"] = null;
+                            System.Web.HttpContext.Current.Session["message"] = "La cuenta se elimino exitosamente";
+                            return RedirectToAction("Index", "User");
+                        }
+                        else
+                        {
+                            ViewBag.Message = "Ocurrio un error al eliminar la cuenta";
+                        }
+                    }
+                    else
+                    {
+                        ViewBag.Message = "La contraseña es incorrecta";
+                    }
+                }
+                else
+                {
+                    ViewBag.Message = "Ocurrio un error en la validación de los datos";
+                }
                 ViewBag.ApplicationName = "Encuestas";
-                ViewBag.Title = "Inicio";
-                ViewBag.Path = "/";
+                ViewBag.Title = "Borrar cuenta";
+                ViewBag.Path = "/User/DeleteAccount";
                 return View();
             }
             else
             {
-                return RedirectToAction("Index", "Poll");
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult DeleteAccount()
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Borrar cuenta";
+                ViewBag.Path = "/User/DeleteAccount";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpPost]
+        public ActionResult ChangePassword(String newPassword, String reNewPassword, String password)
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                if (!newPassword.Equals("") && newPassword.Length <= 50 && newPassword.Equals(reNewPassword) && !password.Equals("") && password.Length <= 50)
+                {
+                    var user = userDTO.GetUserPassword((Int32)System.Web.HttpContext.Current.Session["id"]);
+                    if (user.Password.Equals(Encryption.GetSHA1(password)))
+                    {
+                        User u = new User();
+                        u.Id = (Int32)System.Web.HttpContext.Current.Session["id"];
+                        u.Password = Encryption.GetSHA1(newPassword);
+                        if (userDTO.ChangePassword(u))
+                        {
+                            ViewBag.Message = "Los datos se actualizaron exitosamente";
+                        }
+                        else
+                        {
+                            ViewBag.Message = "Ocurrio un error al actualizar los datos";
+                        }
+                    }
+                    else
+                    {
+                        ViewBag.Message = "La contraseña es incorrecta";
+                    }
+                }
+                else
+                {
+                    ViewBag.Message = "Ocurrio un error en la validación de los datos";
+                }
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Cambiar contraseña";
+                ViewBag.Path = "/User/ChangePassword";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult ChangePassword()
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Cambiar contraseña";
+                ViewBag.Path = "/User/ChangePassword";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpPost]
+        public ActionResult ChangeEmail(String email, String password)
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                if (!email.Equals("") && email.Length <= 50 && !password.Equals("") && password.Length <= 50)
+                {
+                    var user = userDTO.GetUserPassword((Int32)System.Web.HttpContext.Current.Session["id"]);
+                    if (user.Password.Equals(Encryption.GetSHA1(password)))
+                    {
+                        User u = new User();
+                        u.Id = (Int32)System.Web.HttpContext.Current.Session["id"];
+                        u.Email = email;
+                        if (userDTO.ChangeEmail(u))
+                        {
+                            System.Web.HttpContext.Current.Session["email"] = email;
+                            ViewBag.Message = "Los datos se actualizaron exitosamente";
+                        }
+                        else
+                        {
+                            ViewBag.Message = "Ocurrio un error al actualizar los datos";
+                        }
+                    }
+                    else
+                    {
+                        ViewBag.Message = "La contraseña es incorrecta";
+                    }
+                }
+                else
+                {
+                    ViewBag.Message = "Ocurrio un error en la validación de los datos";
+                }
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Cambiar correo";
+                ViewBag.Path = "/User/ChangeEmail";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult ChangeEmail()
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Cambiar correo";
+                ViewBag.Path = "/User/ChangeEmail";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpPost]
+        public ActionResult ChangeUser(String userName,String password)
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                if (!userName.Equals("") && userName.Length <= 25 && !password.Equals("") && password.Length <= 50)
+                {
+                    var user = userDTO.GetUserPassword((Int32)System.Web.HttpContext.Current.Session["id"]);
+                    if (user.Password.Equals(Encryption.GetSHA1(password)))
+                    {
+                        UserProfile up = new UserProfile();
+                        up.UserName = userName;
+                        User u = new User();
+                        u.Id = (Int32)System.Web.HttpContext.Current.Session["id"];
+                        up.User = u;
+                        if (userDTO.ChangeUser(up))
+                        {
+                            System.Web.HttpContext.Current.Session["userName"] = userName;
+                            ViewBag.Message = "Los datos se actualizaron exitosamente";
+                        }
+                        else
+                        {
+                            ViewBag.Message = "Ocurrio un error al actualizar los datos";
+                        }
+                    }
+                    else
+                    {
+                        ViewBag.Message = "La contraseña es incorrecta";
+                    }
+                }
+                else
+                {
+                    ViewBag.Message = "Ocurrio un error en la validación de los datos";
+                }
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Cambiar usuario";
+                ViewBag.Path = "/User/ChangeUser";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult ChangeUser()
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Cambiar usuario";
+                ViewBag.Path = "/User/ChangeUser";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpPost]
+        public ActionResult EditProfile(String name)
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                if (!name.Equals("") && name.Length <= 50)
+                {
+                    UserProfile up = new UserProfile();
+                    up.Name = name;
+                    User u = new User();
+                    u.Id = (Int32)System.Web.HttpContext.Current.Session["id"];
+                    up.User = u;
+                    if (userDTO.EditProfile(up))
+                    {
+                        System.Web.HttpContext.Current.Session["name"] = name;
+                        ViewBag.Message = "Los datos se actualizaron exitosamente";
+                    }
+                    else
+                    {
+                        ViewBag.Message = "Ocurrio un error al actualizar los datos";
+                    }
+                }
+                else
+                {
+                    ViewBag.Message = "Ocurrio un error en la validación de los datos";
+                }
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Editar perfil";
+                ViewBag.Path = "/User/EditProfile";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult EditProfile()
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Editar perfil";
+                ViewBag.Path = "/User/EditProfile";
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult CloseSession()
+        {
+            if (System.Web.HttpContext.Current.Session["id"] != null)
+            {
+                System.Web.HttpContext.Current.Session["userName"] = null;
+                System.Web.HttpContext.Current.Session["name"] = null;
+                System.Web.HttpContext.Current.Session["email"] = null;
+                System.Web.HttpContext.Current.Session["id"] = null;
+                return RedirectToAction("Index", "User");
+            }
+            else
+            {
+                return RedirectToAction("Index", "User");
+            }
+        }
+
+        [HttpGet]
+        public ActionResult Index(String profile)
+        {
+            if (profile==null)
+            {
+                if (System.Web.HttpContext.Current.Session["message"]!=null)
+                {
+                    ViewBag.Message = System.Web.HttpContext.Current.Session["message"];
+                    System.Web.HttpContext.Current.Session["message"] = null;
+                }
+                if (System.Web.HttpContext.Current.Session["id"] == null)
+                {
+                    ViewBag.ApplicationName = "Encuestas";
+                    ViewBag.Title = "Inicio";
+                    ViewBag.Path = "/";
+                    return View();
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Poll");
+                }
+            }
+            else
+            {
+                ViewBag.ApplicationName = "Encuestas";
+                var up = userDTO.Profile(profile);
+                if (up.User!=null)
+                {
+                    var polls = new PollDTO().GetPolls(up.User.Id);
+                    ViewBag.Title = up.Name+" ("+ up.UserName + ")";
+                    return View("Profile",polls);
+                }
+                else
+                {
+                    ViewBag.Title = "Error 404";
+                    return View("../Error404");
+                }
             }
         }
 
@@ -52,12 +385,12 @@ namespace Encuestas_ASP.NET_CSharp.Controllers
                         }
                         else
                         {
-                            ViewBag.message = "Correo o contraseña incorrectos";
+                            ViewBag.Message = "Correo o contraseña incorrectos";
                         }
                     }
                     else
                     {
-                        ViewBag.message = "Correo o contraseña incorrectos";
+                        ViewBag.Message = "Correo o contraseña incorrectos";
                     }
                 }
                 else
@@ -68,16 +401,16 @@ namespace Encuestas_ASP.NET_CSharp.Controllers
                         password = Encryption.GetSHA1(password);
                         if (userDTO.addUser(email, password))
                         {
-                            ViewBag.message = "El registro se realizo exitosamente";
+                            ViewBag.Message = "El registro se realizo exitosamente";
                         }
                         else
                         {
-                            ViewBag.message = "Ocurrio un error al realizar el registro";
+                            ViewBag.Message = "Ocurrio un error al realizar el registro";
                         }
                     }
                     else
                     {
-                        ViewBag.message = "Error en la validacíon de los datos";
+                        ViewBag.Message = "Error en la validacíon de los datos";
                     }
                 }
                 ViewBag.ApplicationName = "Encuestas";
