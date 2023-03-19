@@ -9,8 +9,13 @@
         form.position.focus();
         return false;
     } else
-    if (!val_numeric(form.position)) {
+    if (isNaN(parseInt(form.position.value))) {
         alert('La posición solo acepta valores númericos enteros');
+        form.position.focus();
+        return false;
+    } else
+    if (parseInt(form.position.value) <= 0) {
+        alert('La posición solo acepta valores mayores a 0');
         form.position.focus();
         return false;
     } else {

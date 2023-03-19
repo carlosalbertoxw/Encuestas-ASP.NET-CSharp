@@ -3,7 +3,26 @@
         <div class="text-center" style="margin-bottom:10px;margin-top:10px">
             @ViewBag.Message
         </div>
-        
+        <h4 class="text-center">@ViewBag.Title</h4>
+        <div class="row">
+            <hr>
+            @foreach (var item in Model)
+            {
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        @item.Title
+                        <br>
+                        @item.Description
+                    </div>
+                    <div class="panel-footer">
+                        @Html.ActionLink("Editar", "Edit", "Poll", new { id = @item.Id }, null)
+                        | @Html.ActionLink("Borrar", "Delete", "Poll", new { id = @item.Id }, new { onclick = "return confirm('Estas seguro de borrar este registro')" })
+                        | @Html.ActionLink("Ver Respuestas", "View", "Answer", new { id = @item.Id }, null)
+                        | @Html.ActionLink("Responder", "Add", "Answer", new { id = @item.Id }, null)
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 @section scripts {

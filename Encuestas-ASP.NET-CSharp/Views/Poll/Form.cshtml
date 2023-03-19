@@ -1,0 +1,35 @@
+﻿<div class="container">
+    <div class="row">
+        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
+            @ViewBag.Message
+        </div>
+        <div class="row">
+            <div class="col-md-offset-3 col-md-6 col-sm-12">
+                <h4 class="text-center">@ViewBag.Title</h4>
+                <form class="form-horizontal" action="@ViewBag.Path" method="post" onsubmit="return poll(this)">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="title">Título</label>
+                        <div class="col-sm-8"><input value="@(Model.Title ?? string.Empty)" class="form-control" type="text" name="title" id="title" maxlength="250"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="description">Descripcón</label>
+                        <div class="col-sm-8"><textarea rows="1" class="form-control" name="description" id="description" maxlength="500">@(Model.Description ?? string.Empty)</textarea></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label" for="position">Posición</label>
+                        <div class="col-sm-8"><input value="@(Model.Position != 0 ? Model.Position : string.Empty)" class="form-control" type="text" name="position" id="position" maxlength="6"></div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-4 col-sm-8">
+                            <button class="btn btn-primary" type="submit">Enviar</button>
+                        </div>
+                    </div>
+                    <input value="@(Model.Id)" class="form-control" type="hidden" name="id">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section scripts {
+    <script src="~/Scripts/session-validations.js"></script>
+}

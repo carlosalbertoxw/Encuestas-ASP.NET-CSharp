@@ -327,39 +327,44 @@ namespace Encuestas_ASP.NET_CSharp.Controllers
         [HttpGet]
         public ActionResult Index(String profile)
         {
-            if (profile==null)
+            if (System.Web.HttpContext.Current.Session["id"] == null)
             {
-                if (System.Web.HttpContext.Current.Session["message"]!=null)
+                if (System.Web.HttpContext.Current.Session["message"] != null)
                 {
                     ViewBag.Message = System.Web.HttpContext.Current.Session["message"];
                     System.Web.HttpContext.Current.Session["message"] = null;
                 }
-                if (System.Web.HttpContext.Current.Session["id"] == null)
-                {
-                    ViewBag.ApplicationName = "Encuestas";
-                    ViewBag.Title = "Inicio";
-                    ViewBag.Path = "/";
-                    return View();
-                }
-                else
-                {
-                    return RedirectToAction("Index", "Poll");
-                }
+                ViewBag.ApplicationName = "Encuestas";
+                ViewBag.Title = "Inicio";
+                ViewBag.Path = "/";
+                return View();
             }
             else
             {
-                ViewBag.ApplicationName = "Encuestas";
-                var up = userDTO.Profile(profile);
-                if (up.User!=null)
+                if (profile == null)
                 {
-                    var polls = new PollDTO().GetPolls(up.User.Id);
-                    ViewBag.Title = up.Name+" ("+ up.UserName + ")";
-                    return View("Profile",polls);
+                    return RedirectToAction("Index", "Poll");
                 }
                 else
                 {
-                    ViewBag.Title = "Error 404";
-                    return View("../Error404");
+                    ViewBag.ApplicationName = "Encuestas";
+                    var up = userDTO.Profile(profile);
+                    if (up.User != null)
+                    {
+                        if (System.Web.HttpContext.Current.Session["message"] != null)
+                        {
+                            ViewBag.Message = System.Web.HttpContext.Current.Session["message"];
+                            System.Web.HttpContext.Current.Session["message"] = null;
+                        }
+                        var polls = new PollDTO().GetPolls(up.User.Id);
+                        ViewBag.Title = up.Name + " (" + up.UserName + ")";
+                        return View("Profile", polls);
+                    }
+                    else
+                    {
+                        ViewBag.Title = "Error 404";
+                        return View("../Error404");
+                    }
                 }
             }
         }
@@ -374,7 +379,6 @@ namespace Encuestas_ASP.NET_CSharp.Controllers
                     if (!email.Equals("") && email.Length <= 50 && !password.Equals("") && password.Length <= 50)
                     {
                         var up = userDTO.GetUserProfileByEmail(email);
-                        Debug.WriteLine("user name: "+up.UserName);
                         if (up.User!=null && Encryption.GetSHA1(password).Equals(up.User.Password))
                         {
                             System.Web.HttpContext.Current.Session["userName"] = up.UserName;
