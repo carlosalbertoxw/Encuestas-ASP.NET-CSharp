@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "encuestas-web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/Encuestas.Web", "--urls", "http://localhost:5080"],
+      "port": 5080
+    }
+  ]
+}

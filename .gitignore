@@ -1,21 +1,18 @@
-#Archivos
-*.orig
-
-#Carpetas
+# Compilación
 [Bb]in/
 [Oo]bj/
+[Oo]ut/
+*.orig
 
-packages/
+# IDEs
 .vs/
+.vscode/
+.idea/
+*.user
 
-Utilities/bin/
-Utilities/obj/
+# Configuración local
+.env
 
-Model/bin/
-Model/obj/
-
-Data/bin/
-Data/obj/
-
-Encuestas-ASP.NET-CSharp/bin/
-Encuestas-ASP.NET-CSharp/obj/
+# NuGet
+packages/
+*.nupkg

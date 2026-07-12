@@ -1,0 +1,35 @@
+@model List<Answer>
+<div class="container">
+    <div class="row">
+        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
+            @ViewBag.Message
+        </div>
+        <h4 class="text-center">@ViewData["Title"]</h4>
+        <div class="row">
+            <hr>
+            @if (Model.Count == 0)
+            {
+                <p class="text-center">Esta encuesta aún no tiene respuestas.</p>
+            }
+            @foreach (var item in Model)
+            {
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <strong>@item.UserName</strong>
+                        <span title="@item.Stars de 5 estrellas">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <span class="glyphicon @(i <= item.Stars ? "glyphicon-star" : "glyphicon-star-empty")"></span>
+                            }
+                        </span>
+                        @if (!string.IsNullOrEmpty(item.Comment))
+                        {
+                            <br>
+                            @item.Comment
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

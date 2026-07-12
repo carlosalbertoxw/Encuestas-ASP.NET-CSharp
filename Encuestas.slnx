@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Encuestas.Data/Encuestas.Data.csproj" />
+    <Project Path="src/Encuestas.Model/Encuestas.Model.csproj" />
+    <Project Path="src/Encuestas.Web/Encuestas.Web.csproj" />
+  </Folder>
+</Solution>

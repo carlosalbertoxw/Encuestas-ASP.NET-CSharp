@@ -1,0 +1,32 @@
+@model List<Poll>
+<div class="container">
+    <div class="row">
+        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
+            @ViewBag.Message
+        </div>
+        <h4 class="text-center">@ViewData["Title"]</h4>
+        <div class="row">
+            <hr>
+            @foreach (var item in Model)
+            {
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        @item.Title
+                        <br>
+                        @item.Description
+                    </div>
+                    <div class="panel-footer">
+                        <a asp-controller="Poll" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+                        |
+                        <form asp-controller="Poll" asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline"
+                              onsubmit="return confirm('¿Estás seguro de borrar este registro?')">
+                            <button type="submit" class="btn btn-link" style="padding:0;border:none;vertical-align:baseline">Borrar</button>
+                        </form>
+                        | <a asp-controller="Answer" asp-action="Answers" asp-route-id="@item.Id">Ver respuestas</a>
+                        | <a asp-controller="Answer" asp-action="Add" asp-route-id="@item.Id">Responder</a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
