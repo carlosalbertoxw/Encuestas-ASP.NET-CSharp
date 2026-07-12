@@ -5,10 +5,21 @@
     <ProjectReference Include="..\Encuestas.Model\Encuestas.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="dbup-mysql" Version="6.1.0" />
+    <PackageReference Include="MySqlConnector.DependencyInjection" Version="2.6.1" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <!-- Las migraciones viajan dentro del ensamblado; DbUp las lee como recursos embebidos. -->
+  <ItemGroup>
+    <Content Remove="Migrations\**\*.sql" />
+    <EmbeddedResource Include="Migrations\**\*.sql" />
+  </ItemGroup>
 
 </Project>

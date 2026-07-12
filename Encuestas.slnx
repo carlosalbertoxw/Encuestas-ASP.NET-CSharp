@@ -4,4 +4,7 @@
     <Project Path="src/Encuestas.Model/Encuestas.Model.csproj" />
     <Project Path="src/Encuestas.Web/Encuestas.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Encuestas.Tests/Encuestas.Tests.csproj" />
+  </Folder>
 </Solution>

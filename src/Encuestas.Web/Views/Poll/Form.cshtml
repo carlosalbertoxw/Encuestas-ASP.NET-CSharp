@@ -1,36 +1,30 @@
-@model Poll
-<div class="container">
-    <div class="row">
-        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
-            @ViewBag.Message
-        </div>
-        <div class="row">
-            <div class="col-md-offset-3 col-md-6 col-sm-12">
-                <h4 class="text-center">@ViewData["Title"]</h4>
-                <form class="form-horizontal" asp-controller="Poll" asp-action="@(Model.Id == 0 ? "Add" : "Update")" method="post" onsubmit="return poll(this)">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label" for="title">Título</label>
-                        <div class="col-sm-8"><input value="@Model.Title" class="form-control" type="text" name="title" id="title" maxlength="250"></div>
+@model PollFormViewModel
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8 col-lg-6">
+        <partial name="_Message" />
+        <h4 class="text-center mb-3">@ViewData["Title"]</h4>
+        <div class="card">
+            <div class="card-body">
+                <form asp-controller="Poll" asp-action="@(Model.Id == 0 ? "Add" : "Update")" method="post">
+                    <input type="hidden" asp-for="Id">
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Title">Título</label>
+                        <input class="form-control" asp-for="Title">
+                        <span class="text-danger small" asp-validation-for="Title"></span>
                     </div>
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label" for="description">Descripción</label>
-                        <div class="col-sm-8"><textarea rows="1" class="form-control" name="description" id="description" maxlength="500">@Model.Description</textarea></div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Description">Descripción</label>
+                        <textarea class="form-control" rows="3" asp-for="Description"></textarea>
+                        <span class="text-danger small" asp-validation-for="Description"></span>
                     </div>
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label" for="position">Posición</label>
-                        <div class="col-sm-8"><input value="@(Model.Position != 0 ? Model.Position : string.Empty)" class="form-control" type="text" name="position" id="position" maxlength="6"></div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Position">Posición</label>
+                        <input class="form-control" type="number" min="1" asp-for="Position">
+                        <span class="text-danger small" asp-validation-for="Position"></span>
                     </div>
-                    <div class="form-group">
-                        <div class="col-sm-offset-4 col-sm-8">
-                            <button class="btn btn-primary" type="submit">Enviar</button>
-                        </div>
-                    </div>
-                    <input value="@Model.Id" type="hidden" name="id">
+                    <button class="btn btn-primary w-100" type="submit">Guardar</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-@section scripts {
-    <script src="~/js/session-validations.js"></script>
-}

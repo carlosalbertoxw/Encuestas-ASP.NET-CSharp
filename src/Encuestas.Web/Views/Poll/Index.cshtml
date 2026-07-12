@@ -1,32 +1,27 @@
 @model List<Poll>
-<div class="container">
-    <div class="row">
-        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
-            @ViewBag.Message
+<div class="mt-3">
+    <partial name="_Message" />
+    <h4 class="text-center mb-3">@ViewData["Title"]</h4>
+    @if (Model.Count == 0)
+    {
+        <p class="text-center text-secondary">Aún no tienes encuestas. Usa «Agregar encuesta» para crear la primera.</p>
+    }
+    @foreach (var item in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@item.Title</h5>
+                <p class="card-text">@item.Description</p>
+            </div>
+            <div class="card-footer d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-primary" asp-controller="Poll" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="Answer" asp-action="Answers" asp-route-id="@item.Id">Ver respuestas</a>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="Answer" asp-action="Add" asp-route-id="@item.Id">Responder</a>
+                <form asp-controller="Poll" asp-action="Delete" asp-route-id="@item.Id" method="post" class="ms-auto"
+                      data-confirm="¿Estás seguro de borrar este registro?">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Borrar</button>
+                </form>
+            </div>
         </div>
-        <h4 class="text-center">@ViewData["Title"]</h4>
-        <div class="row">
-            <hr>
-            @foreach (var item in Model)
-            {
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        @item.Title
-                        <br>
-                        @item.Description
-                    </div>
-                    <div class="panel-footer">
-                        <a asp-controller="Poll" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
-                        |
-                        <form asp-controller="Poll" asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline"
-                              onsubmit="return confirm('¿Estás seguro de borrar este registro?')">
-                            <button type="submit" class="btn btn-link" style="padding:0;border:none;vertical-align:baseline">Borrar</button>
-                        </form>
-                        | <a asp-controller="Answer" asp-action="Answers" asp-route-id="@item.Id">Ver respuestas</a>
-                        | <a asp-controller="Answer" asp-action="Add" asp-route-id="@item.Id">Responder</a>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
+    }
 </div>

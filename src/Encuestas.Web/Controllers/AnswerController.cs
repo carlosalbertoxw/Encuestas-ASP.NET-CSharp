@@ -1,6 +1,9 @@
+using System.Globalization;
 using System.Security.Claims;
 using Encuestas.Data;
 using Encuestas.Model;
+using Encuestas.Web.Models;
+using Encuestas.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +12,8 @@ namespace Encuestas.Web.Controllers;
 [Authorize]
 public class AnswerController : Controller
 {
+    private const int PageSize = 10;
+
     private readonly IPollRepository _polls;
     private readonly IAnswerRepository _answers;
 
@@ -18,7 +23,7 @@ public class AnswerController : Controller
         _answers = answers;
     }
 
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!, CultureInfo.InvariantCulture);
 
     /// <summary>Formulario para responder una encuesta (propia o de otro usuario).</summary>
     [HttpGet]
@@ -35,7 +40,7 @@ public class AnswerController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(int id, string? stars, string? comment)
+    public async Task<IActionResult> Add(int id, AnswerFormViewModel model)
     {
         var poll = await _polls.GetPollByIdAsync(id);
         if (poll is null)
@@ -43,29 +48,31 @@ public class AnswerController : Controller
             return NotFound();
         }
 
-        if (!int.TryParse(stars, out var parsedStars) || parsedStars < 1 || parsedStars > 5
-            || (comment is not null && comment.Length > 1000))
+        if (!ModelState.IsValid)
         {
-            TempData["Message"] = "Ocurrió un error en la validación de los datos";
+            TempData["Message"] = Messages.ValidationError;
             return RedirectToAction("Add", new { id });
         }
 
         var answer = new Answer
         {
-            Stars = parsedStars,
-            Comment = comment ?? string.Empty,
+            Stars = model.Stars,
+            Comment = model.Comment ?? string.Empty,
             PollId = id,
             UserId = CurrentUserId
         };
-        TempData["Message"] = await _answers.AddAnswerAsync(answer)
-            ? "La respuesta se guardó exitosamente"
-            : "Ocurrió un error al guardar la respuesta";
+        TempData["Message"] = await _answers.AddAnswerAsync(answer) switch
+        {
+            RepositoryResult.Success => Messages.AnswerSaved,
+            RepositoryResult.Duplicate => Messages.AnswerDuplicate,
+            _ => Messages.AnswerError
+        };
         return RedirectToAction("Index", "Poll");
     }
 
     /// <summary>Respuestas recibidas por una encuesta; solo visibles para su propietario.</summary>
     [HttpGet]
-    public async Task<IActionResult> Answers(int id)
+    public async Task<IActionResult> Answers(int id, int page = 1)
     {
         var poll = await _polls.GetPollAsync(CurrentUserId, id);
         if (poll is null)
@@ -73,7 +80,8 @@ public class AnswerController : Controller
             return NotFound();
         }
         ViewData["Title"] = $"Respuestas: {poll.Title}";
-        var answers = await _answers.GetAnswersForPollAsync(id);
+        ViewBag.PollId = id;
+        var answers = await _answers.GetAnswersForPollAsync(id, page, PageSize);
         return View(answers);
     }
 }

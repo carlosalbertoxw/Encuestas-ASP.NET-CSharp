@@ -1,45 +1,34 @@
 @model Poll
-<div class="container">
-    <div class="row">
-        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
-            @ViewBag.Message
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8 col-lg-6">
+        <partial name="_Message" />
+        <h4 class="text-center mb-3">@ViewData["Title"]</h4>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@Model.Title</h5>
+                <p class="card-text">@Model.Description</p>
+            </div>
         </div>
-        <div class="row">
-            <div class="col-md-offset-3 col-md-6 col-sm-12">
-                <h4 class="text-center">@ViewData["Title"]</h4>
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        @Model.Title
-                        <br>
-                        @Model.Description
+        <div class="card">
+            <div class="card-body">
+                <form asp-controller="Answer" asp-action="Add" asp-route-id="@Model.Id" method="post">
+                    <div class="mb-3">
+                        <span class="form-label d-block">Estrellas</span>
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="Stars" id="stars@(i)" value="@i" required>
+                                <label class="form-check-label" for="stars@(i)">@i</label>
+                            </div>
+                        }
                     </div>
-                </div>
-                <form class="form-horizontal" asp-controller="Answer" asp-action="Add" asp-route-id="@Model.Id" method="post" onsubmit="return add_poll_answer()">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">Estrellas</label>
-                        <div class="col-sm-8">
-                            @for (var i = 1; i <= 5; i++)
-                            {
-                                <label class="radio-inline">
-                                    <input type="radio" name="stars" value="@i"> @i
-                                </label>
-                            }
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="Comment">Comentario</label>
+                        <textarea class="form-control" rows="3" name="Comment" id="Comment" maxlength="1000"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label" for="comment">Comentario</label>
-                        <div class="col-sm-8"><textarea rows="3" class="form-control" name="comment" id="comment" maxlength="1000"></textarea></div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-offset-4 col-sm-8">
-                            <button class="btn btn-primary" type="submit">Enviar</button>
-                        </div>
-                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Enviar respuesta</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-@section scripts {
-    <script src="~/js/public-validations.js"></script>
-}

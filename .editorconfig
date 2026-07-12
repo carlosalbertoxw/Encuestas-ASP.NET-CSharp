@@ -1,0 +1,39 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{cs,csx}]
+indent_size = 4
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = outside_namespace:warning
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+
+[*.{csproj,props,targets,json,yml,yaml}]
+indent_size = 2
+
+[*.{sql,cshtml}]
+indent_size = 4
+
+# --- Analizadores CA: ajustes para una app web pequeña ---
+[*.cs]
+# El logging estructurado directo es suficiente aquí; no exigimos LoggerMessage source-gen.
+dotnet_diagnostic.CA1848.severity = none
+# Los argumentos de log son accesos a propiedades baratos; no justifican guardas de nivel.
+dotnet_diagnostic.CA1873.severity = none
+# No forzamos ConfigureAwait(false) en una app ASP.NET Core (no hay SynchronizationContext).
+dotnet_diagnostic.CA2007.severity = none
+# Los tipos públicos son intencionales (controladores, servicios, modelos usados por vistas/tests).
+dotnet_diagnostic.CA1515.severity = none
+
+# --- Proyecto de pruebas ---
+[tests/**/*.cs]
+# Los nombres de prueba en snake_case en español son deliberados y más legibles.
+dotnet_diagnostic.CA1707.severity = none
+# El sufijo 'Collection' es la convención de xUnit para las clases [CollectionDefinition].
+dotnet_diagnostic.CA1711.severity = none

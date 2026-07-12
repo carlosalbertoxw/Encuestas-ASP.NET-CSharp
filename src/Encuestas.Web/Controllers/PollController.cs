@@ -1,6 +1,9 @@
+using System.Globalization;
 using System.Security.Claims;
 using Encuestas.Data;
 using Encuestas.Model;
+using Encuestas.Web.Models;
+using Encuestas.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,13 +13,15 @@ namespace Encuestas.Web.Controllers;
 public class PollController : Controller
 {
     private readonly IPollRepository _polls;
+    private readonly ILogger<PollController> _logger;
 
-    public PollController(IPollRepository polls)
+    public PollController(IPollRepository polls, ILogger<PollController> logger)
     {
         _polls = polls;
+        _logger = logger;
     }
 
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!, CultureInfo.InvariantCulture);
 
     [HttpGet]
     public async Task<IActionResult> Index()
@@ -31,29 +36,27 @@ public class PollController : Controller
     public IActionResult Add()
     {
         ViewData["Title"] = "Agregar encuesta";
-        return View("Form", new Poll());
+        return View("Form", new PollFormViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(string? title, string? description, string? position)
+    public async Task<IActionResult> Add(PollFormViewModel model)
     {
-        if (!TryValidatePoll(title, description, position, out var parsedPosition))
+        if (!ModelState.IsValid)
         {
-            TempData["Message"] = "Ocurrió un error en la validación de los datos";
+            TempData["Message"] = Messages.ValidationError;
             return RedirectToAction("Index");
         }
 
         var poll = new Poll
         {
-            Title = title!,
-            Description = description!,
-            Position = parsedPosition,
+            Title = model.Title,
+            Description = model.Description,
+            Position = model.Position,
             UserId = CurrentUserId
         };
-        TempData["Message"] = await _polls.AddPollAsync(poll)
-            ? "Los datos se guardaron exitosamente"
-            : "Ocurrió un error al guardar los datos";
+        TempData["Message"] = await _polls.AddPollAsync(poll) ? Messages.PollSaved : Messages.PollSaveError;
         return RedirectToAction("Index");
     }
 
@@ -66,30 +69,34 @@ public class PollController : Controller
             return NotFound();
         }
         ViewData["Title"] = "Editar encuesta";
-        return View("Form", poll);
+        return View("Form", new PollFormViewModel
+        {
+            Id = poll.Id,
+            Title = poll.Title,
+            Description = poll.Description,
+            Position = poll.Position
+        });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Update(string? title, string? description, string? position, int id)
+    public async Task<IActionResult> Update(PollFormViewModel model)
     {
-        if (!TryValidatePoll(title, description, position, out var parsedPosition) || id < 1)
+        if (!ModelState.IsValid || model.Id < 1)
         {
-            TempData["Message"] = "Ocurrió un error en la validación de los datos";
+            TempData["Message"] = Messages.ValidationError;
             return RedirectToAction("Index");
         }
 
         var poll = new Poll
         {
-            Id = id,
-            Title = title!,
-            Description = description!,
-            Position = parsedPosition,
+            Id = model.Id,
+            Title = model.Title,
+            Description = model.Description,
+            Position = model.Position,
             UserId = CurrentUserId
         };
-        TempData["Message"] = await _polls.UpdatePollAsync(poll)
-            ? "Los datos se actualizaron exitosamente"
-            : "Ocurrió un error al actualizar los datos";
+        TempData["Message"] = await _polls.UpdatePollAsync(poll) ? Messages.PollUpdated : Messages.UpdateError;
         return RedirectToAction("Index");
     }
 
@@ -99,21 +106,19 @@ public class PollController : Controller
     {
         if (id < 1)
         {
-            TempData["Message"] = "Ocurrió un error en la validación de los datos";
+            TempData["Message"] = Messages.ValidationError;
             return RedirectToAction("Index");
         }
 
-        TempData["Message"] = await _polls.DeletePollAsync(CurrentUserId, id)
-            ? "Los datos se borraron exitosamente"
-            : "Ocurrió un error al borrar los datos";
+        if (await _polls.DeletePollAsync(CurrentUserId, id))
+        {
+            _logger.LogInformation("Encuesta {PollId} eliminada por el usuario {UserId}", id, CurrentUserId);
+            TempData["Message"] = Messages.PollDeleted;
+        }
+        else
+        {
+            TempData["Message"] = Messages.PollDeleteError;
+        }
         return RedirectToAction("Index");
-    }
-
-    private static bool TryValidatePoll(string? title, string? description, string? position, out int parsedPosition)
-    {
-        parsedPosition = 0;
-        return !string.IsNullOrWhiteSpace(title) && title.Length <= 250
-            && !string.IsNullOrWhiteSpace(description) && description.Length <= 500
-            && int.TryParse(position, out parsedPosition) && parsedPosition >= 1;
     }
 }

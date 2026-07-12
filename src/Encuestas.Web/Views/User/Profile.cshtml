@@ -1,25 +1,21 @@
 @model List<Poll>
-<div class="container">
-    <div class="row">
-        <div class="text-center" style="margin-bottom:10px;margin-top:10px">
-            @ViewBag.Message
+<div class="mt-3">
+    <partial name="_Message" />
+    <h4 class="text-center mb-3">@ViewData["Title"]</h4>
+    @if (Model.Count == 0)
+    {
+        <p class="text-center text-secondary">Este usuario aún no tiene encuestas.</p>
+    }
+    @foreach (var item in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@item.Title</h5>
+                <p class="card-text">@item.Description</p>
+            </div>
+            <div class="card-footer">
+                <a class="btn btn-sm btn-outline-primary" asp-controller="Answer" asp-action="Add" asp-route-id="@item.Id">Responder</a>
+            </div>
         </div>
-        <h4 class="text-center">@ViewData["Title"]</h4>
-        <div class="row">
-            <hr>
-            @foreach (var item in Model)
-            {
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        @item.Title
-                        <br>
-                        @item.Description
-                    </div>
-                    <div class="panel-footer">
-                        <a asp-controller="Answer" asp-action="Add" asp-route-id="@item.Id">Responder</a>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
+    }
 </div>

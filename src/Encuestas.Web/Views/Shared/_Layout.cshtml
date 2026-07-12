@@ -5,57 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] - Encuestas</title>
     <link rel="icon" href="~/favicon.ico" />
-    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/bootstrap-theme.min.css" />
-    <link rel="stylesheet" href="~/css/Site.css" />
+    <link rel="stylesheet" href="~/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Site.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="navbar navbar-default navbar-fixed-top">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark">
         <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <a class="navbar-brand" asp-controller="Poll" asp-action="Index">Encuestas</a>
-                }
-                else
-                {
-                    <a class="navbar-brand" asp-controller="User" asp-action="Index">Encuestas</a>
-                }
-            </div>
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <div id="navbar" class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav navbar-left">
-                        <li><a asp-controller="Poll" asp-action="Add">Agregar encuesta</a></li>
+                <a class="navbar-brand" asp-controller="Poll" asp-action="Index">Encuestas</a>
+            }
+            else
+            {
+                <a class="navbar-brand" asp-controller="User" asp-action="Index">Encuestas</a>
+            }
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+                        aria-controls="navbar" aria-expanded="false" aria-label="Alternar navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div id="navbar" class="collapse navbar-collapse">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Poll" asp-action="Add">Agregar encuesta</a></li>
                     </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Usuario <span class="caret"></span></a>
-                            <ul class="dropdown-menu">
-                                <li><a asp-controller="User" asp-action="Index" asp-route-profile="@User.Identity!.Name">Ver perfil</a></li>
-                                <li><a asp-controller="User" asp-action="EditProfile">Editar perfil</a></li>
-                                <li><a asp-controller="User" asp-action="ChangeUser">Cambiar usuario</a></li>
-                                <li><a asp-controller="User" asp-action="ChangeEmail">Cambiar correo electrónico</a></li>
-                                <li><a asp-controller="User" asp-action="ChangePassword">Cambiar contraseña</a></li>
-                                <li><a asp-controller="User" asp-action="DeleteAccount">Borrar cuenta</a></li>
-                                <li><a asp-controller="User" asp-action="CloseSession">Cerrar sesión</a></li>
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Usuario</a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="Index" asp-route-profile="@User.Identity!.Name">Ver perfil</a></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="EditProfile">Editar perfil</a></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="ChangeUser">Cambiar usuario</a></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="ChangeEmail">Cambiar correo electrónico</a></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="ChangePassword">Cambiar contraseña</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="DeleteAccount">Borrar cuenta</a></li>
+                                <li>
+                                    <form asp-controller="User" asp-action="CloseSession" method="post">
+                                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                    </form>
+                                </li>
                             </ul>
                         </li>
                     </ul>
                 </div>
             }
         </div>
-    </div>
-    <div class="container body-content">
+    </nav>
+    <main class="container body-content">
         @RenderBody()
-    </div>
-    <script src="~/js/jquery-3.3.1.min.js"></script>
-    <script src="~/js/bootstrap.min.js"></script>
+    </main>
+    <script src="~/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/aspnet-validation.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("scripts", required: false)
 </body>
 </html>

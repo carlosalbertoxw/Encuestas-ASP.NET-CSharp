@@ -10,15 +10,32 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-encuestas}
     ports:
       - "${MYSQL_PORT:-3306}:3306"
+    # El esquema lo aplican las migraciones DbUp al arrancar la aplicación
+    # (src/Encuestas.Web/Migrations); el contenedor solo crea la base vacía.
     volumes:
       - db-data:/var/lib/mysql
-      # Los scripts de db/init solo se ejecutan la primera vez que se crea el volumen.
-      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: encuestas-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # La app se conecta al contenedor de MySQL por el nombre del servicio (db).
+      ConnectionStrings__Default: "Server=db;Port=3306;Database=${MYSQL_DATABASE:-encuestas};User ID=${MYSQL_USER:-encuestas};Password=${MYSQL_PASSWORD:-encuestas};"
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    # Orquestadores (K8s, etc.) pueden usar la ruta HTTP /health como sonda de readiness/liveness.
 
 volumes:
   db-data:
