@@ -3,7 +3,7 @@ namespace Encuestas.Web.Services;
 /// <summary>Envío de correos transaccionales (confirmación de cuenta, restablecimiento).</summary>
 public interface IEmailSender
 {
-    Task SendAsync(string to, string subject, string htmlBody);
+    Task SendAsync(string recipient, string subject, string htmlBody);
 }
 
 /// <summary>
@@ -19,9 +19,9 @@ public class LoggingEmailSender : IEmailSender
         _logger = logger;
     }
 
-    public Task SendAsync(string to, string subject, string htmlBody)
+    public Task SendAsync(string recipient, string subject, string htmlBody)
     {
-        _logger.LogInformation("[Correo simulado] Para: {To} | Asunto: {Subject}\n{Body}", to, subject, htmlBody);
+        _logger.LogInformation("[Correo simulado] Para: {To} | Asunto: {Subject}\n{Body}", recipient, subject, htmlBody);
         return Task.CompletedTask;
     }
 }
