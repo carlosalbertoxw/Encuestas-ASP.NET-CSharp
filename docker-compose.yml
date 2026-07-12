@@ -1,6 +1,6 @@
 services:
   db:
-    image: mysql:8.4
+    image: mysql:9.7
     container_name: encuestas-db
     restart: unless-stopped
     environment:
