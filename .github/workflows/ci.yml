@@ -23,6 +23,32 @@ jobs:
       - name: Pruebas unitarias
         run: dotnet test Encuestas.slnx --no-restore --configuration Release --filter "Category!=Integration" --logger "console;verbosity=normal"
 
+  # Auditoría de vulnerabilidades: solo necesita el restore, no compilar.
+  auditoria:
+    runs-on: ubuntu-latest
+    env:
+      # La detección por grep depende del texto en inglés de la CLI.
+      DOTNET_CLI_UI_LANGUAGE: en
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restaurar dependencias
+        run: dotnet restore Encuestas.slnx
+
+      - name: Auditar dependencias vulnerables
+        shell: bash
+        run: |
+          dotnet list Encuestas.slnx package --vulnerable --include-transitive | tee vulnerable.txt
+          if grep -q "has the following vulnerable packages" vulnerable.txt; then
+            echo "::error::Se encontraron dependencias con vulnerabilidades conocidas."
+            exit 1
+          fi
+
   build-e-integracion:
     runs-on: ubuntu-latest
     steps:
