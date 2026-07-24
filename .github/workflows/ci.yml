@@ -6,7 +6,24 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  # Rápido y sin Docker: solo las pruebas marcadas como unitarias (sin el trait Integration).
+  pruebas-unitarias:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restaurar dependencias
+        run: dotnet restore Encuestas.slnx
+
+      - name: Pruebas unitarias
+        run: dotnet test Encuestas.slnx --no-restore --configuration Release --filter "Category!=Integration" --logger "console;verbosity=normal"
+
+  build-e-integracion:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -23,5 +40,5 @@ jobs:
         run: dotnet build Encuestas.slnx --no-restore --configuration Release -warnaserror
 
       # Las pruebas de integración usan Testcontainers; el runner de GitHub ya trae Docker.
-      - name: Pruebas
-        run: dotnet test Encuestas.slnx --no-build --configuration Release --logger "console;verbosity=normal"
+      - name: Pruebas de integración
+        run: dotnet test Encuestas.slnx --no-build --configuration Release --filter "Category=Integration" --logger "console;verbosity=normal"

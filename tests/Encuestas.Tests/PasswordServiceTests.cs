@@ -1,4 +1,6 @@
 using Encuestas.Web.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace Encuestas.Tests;
 
@@ -33,5 +35,16 @@ public class PasswordServiceTests
     {
         Assert.Equal(PasswordVerificationOutcome.Failed,
             _service.Verify("esto-no-es-un-hash-válido", "cualquiera"));
+    }
+
+    [Fact]
+    public void Verify_señala_rehash_para_un_hash_legado_Identity_V2()
+    {
+        var legacyHasher = new PasswordHasher<object>(Options.Create(
+            new PasswordHasherOptions { CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV2 }));
+        var legacyHash = legacyHasher.HashPassword(new object(), "Secreta123");
+
+        Assert.Equal(PasswordVerificationOutcome.SuccessRehashNeeded,
+            _service.Verify(legacyHash, "Secreta123"));
     }
 }

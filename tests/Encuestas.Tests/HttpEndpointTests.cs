@@ -9,6 +9,7 @@ namespace Encuestas.Tests;
 /// antiforgery. Ejercen la aplicación completa (middleware incluido), no solo los repositorios.
 /// </summary>
 [Collection("http")]
+[Trait("Category", "Integration")]
 public partial class HttpEndpointTests
 {
     private readonly WebAppFactory _factory;

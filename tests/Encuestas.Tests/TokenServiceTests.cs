@@ -37,4 +37,30 @@ public class TokenServiceTests
 
         Assert.Null(_tokens.ValidatePasswordResetToken(confirmToken));
     }
+
+    [Fact]
+    public void Un_token_de_restablecimiento_no_sirve_como_confirmacion()
+    {
+        var resetToken = _tokens.CreatePasswordResetToken(7, "sello-123");
+
+        Assert.Null(_tokens.ValidateEmailConfirmationToken(resetToken));
+    }
+
+    [Fact]
+    public void Token_de_restablecimiento_manipulado_es_invalido()
+    {
+        var token = _tokens.CreatePasswordResetToken(7, "sello-123");
+
+        Assert.Null(_tokens.ValidatePasswordResetToken("no-es-un-token"));
+        Assert.Null(_tokens.ValidatePasswordResetToken(token + "x"));
+    }
+
+    [Fact]
+    public void Tokens_de_otra_llave_de_proteccion_no_se_validan()
+    {
+        var otraInstancia = new TokenService(new EphemeralDataProtectionProvider());
+        var tokenAjeno = otraInstancia.CreateEmailConfirmationToken(42);
+
+        Assert.Null(_tokens.ValidateEmailConfirmationToken(tokenAjeno));
+    }
 }

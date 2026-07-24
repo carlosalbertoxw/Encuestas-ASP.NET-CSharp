@@ -75,4 +75,46 @@ public class ViewModelValidationTests
     {
         Assert.Equal(expected, IsValid(new AnswerFormViewModel { Stars = stars }));
     }
+
+    [Theory]
+    [InlineData(250, 500, true)]
+    [InlineData(251, 500, false)]
+    [InlineData(250, 501, false)]
+    public void Encuesta_valida_longitud_de_titulo_y_descripcion(int titleLength, int descriptionLength, bool expected)
+    {
+        var model = new PollFormViewModel
+        {
+            Title = new string('t', titleLength),
+            Description = new string('d', descriptionLength),
+            Position = 1
+        };
+        Assert.Equal(expected, IsValid(model));
+    }
+
+    [Fact]
+    public void Respuesta_acepta_comentario_nulo_y_rechaza_mas_de_mil_caracteres()
+    {
+        Assert.True(IsValid(new AnswerFormViewModel { Stars = 3, Comment = null }));
+        Assert.False(IsValid(new AnswerFormViewModel { Stars = 3, Comment = new string('c', 1001) }));
+    }
+
+    [Fact]
+    public void Restablecimiento_rechaza_contraseñas_que_no_coinciden_y_token_vacio()
+    {
+        Assert.False(IsValid(new ResetPasswordViewModel { Token = "tok", NewPassword = "secreta1", ReNewPassword = "secreta2" }));
+        Assert.False(IsValid(new ResetPasswordViewModel { Token = "", NewPassword = "secreta1", ReNewPassword = "secreta1" }));
+    }
+
+    [Fact]
+    public void CambioDeCorreo_rechaza_correo_invalido()
+    {
+        Assert.False(IsValid(new ChangeEmailViewModel { Email = "no-es-correo", Password = "secreta1" }));
+    }
+
+    [Fact]
+    public void Login_exige_correo_valido_y_contraseña_presente()
+    {
+        Assert.False(IsValid(new LoginViewModel { Email = "x", Password = "secreta1" }));
+        Assert.False(IsValid(new LoginViewModel { Email = "a@b.co", Password = "" }));
+    }
 }

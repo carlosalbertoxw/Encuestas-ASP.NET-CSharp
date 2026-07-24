@@ -4,6 +4,7 @@ using Encuestas.Model;
 namespace Encuestas.Tests;
 
 [Collection("mysql")]
+[Trait("Category", "Integration")]
 public class RepositoryIntegrationTests
 {
     private readonly UserRepository _users;
