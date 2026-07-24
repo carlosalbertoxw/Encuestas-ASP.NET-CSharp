@@ -81,6 +81,7 @@ La base de datos en Docker se personaliza copiando `.env.example` a `.env`:
 | `MYSQL_USER`          | Usuario de la aplicación           | `encuestas` |
 | `MYSQL_PASSWORD`      | Contraseña del usuario             | `encuestas` |
 | `MYSQL_PORT`          | Puerto expuesto en el host         | `3306`      |
+| `WEB_PORT`            | Puerto de la aplicación web (Opción A) | `8080`  |
 
 Los valores por defecto son solo para desarrollo local.
 
@@ -96,8 +97,7 @@ src/
   Encuestas.Data/     # Repositorios ADO.NET async sobre MySqlConnector (RepositoryResult, PagedResult)
   Encuestas.Model/    # Entidades: User, UserProfile, Poll, Answer
 tests/
-  Encuestas.Tests/    # xUnit: unitarias, integración (Testcontainers) y HTTP (WebApplicationFactory)
-docs/                 # Revisiones de arquitectura y calidad
+  Encuestas.Tests/    # xUnit: unitarias + integración (trait Category=Integration, Testcontainers y WebApplicationFactory)
 Dockerfile            # Imagen multi-stage de la app (usuario no root)
 docker-compose.yml    # Servicios web + MySQL 8.4 con volumen persistente y healthcheck
 Encuestas.slnx        # Solución (.NET 10)
@@ -106,10 +106,32 @@ Encuestas.slnx        # Solución (.NET 10)
 ## Pruebas
 
 ```bash
+# Suite completa (las de integración requieren Docker en ejecución)
 dotnet test
+
+# Solo unitarias (rápidas, sin Docker)
+dotnet test --filter "Category!=Integration"
+
+# Solo integración (Testcontainers)
+dotnet test --filter "Category=Integration"
 ```
 
-Hay pruebas unitarias (hashing, validación de ViewModels, tokens, lockout), de integración de repositorios y de extremo a extremo del pipeline HTTP con `WebApplicationFactory`. Las que tocan la base de datos levantan un MySQL 8.4 efímero con Testcontainers, por lo que requieren Docker en ejecución. En CI (GitHub Actions) se ejecutan build y pruebas en cada push y pull request.
+La suite tiene 71 pruebas divididas en dos grupos:
+
+- **56 unitarias** — hashing y re-hash transparente de hashes legados (`PasswordService`), flujo completo de inicio de sesión (`AuthService`: bloqueo, credenciales, confirmación de correo, claims), tokens firmados (`TokenService`), bloqueo por cuenta (`AccountLockout`), caché del sello de seguridad (`SecurityStampCache`), paginación (`PagedResult`) y validación de ViewModels.
+- **15 de integración** — marcadas con el trait `Category=Integration`: repositorios contra un MySQL 8.4 efímero (Testcontainers) y extremo a extremo del pipeline HTTP con `WebApplicationFactory`. Requieren Docker en ejecución.
+
+## Integración continua
+
+En cada push y pull request, GitHub Actions ([ci.yml](.github/workflows/ci.yml)) ejecuta tres jobs en paralelo:
+
+| Job                   | Qué hace                                                                        |
+|-----------------------|----------------------------------------------------------------------------------|
+| `pruebas-unitarias`   | Ejecuta solo las 56 unitarias; da señal rápida y no necesita Docker              |
+| `auditoria`           | `dotnet list package --vulnerable`: falla si alguna dependencia (directa o transitiva) tiene vulnerabilidades conocidas |
+| `build-e-integracion` | Compila con `-warnaserror` y ejecuta las 15 de integración                       |
+
+Dependabot ([dependabot.yml](.github/dependabot.yml)) revisa mensualmente las dependencias de NuGet, Docker Compose y GitHub Actions.
 
 ## Base de datos
 
