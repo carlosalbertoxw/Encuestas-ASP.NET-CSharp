@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="dbup-mysql" Version="6.1.0" />
-    <PackageReference Include="MySqlConnector.DependencyInjection" Version="2.6.1" />
+    <PackageReference Include="MySqlConnector.DependencyInjection" Version="2.6.2" />
   </ItemGroup>
 
   <PropertyGroup>
