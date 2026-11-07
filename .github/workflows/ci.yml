@@ -2,11 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [master, migracion-net10]
+    branches: [master]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   # Rápido y sin Docker: solo las pruebas marcadas como unitarias (sin el trait Integration).
+  # El restore audita las dependencias (NuGetAudit en Directory.Build.props) y falla si
+  # alguna, directa o transitiva, tiene una vulnerabilidad conocida.
   pruebas-unitarias:
     runs-on: ubuntu-latest
     steps:
@@ -15,56 +20,55 @@ jobs:
       - name: Configurar .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
-      - name: Restaurar dependencias
-        run: dotnet restore Encuestas.slnx
-
-      - name: Pruebas unitarias
-        run: dotnet test Encuestas.slnx --no-restore --configuration Release --filter "Category!=Integration" --logger "console;verbosity=normal"
-
-  # Auditoría de vulnerabilidades: solo necesita el restore, no compilar.
-  auditoria:
-    runs-on: ubuntu-latest
-    env:
-      # La detección por grep depende del texto en inglés de la CLI.
-      DOTNET_CLI_UI_LANGUAGE: en
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Configurar .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restaurar dependencias
-        run: dotnet restore Encuestas.slnx
-
-      - name: Auditar dependencias vulnerables
-        shell: bash
-        run: |
-          dotnet list Encuestas.slnx package --vulnerable --include-transitive | tee vulnerable.txt
-          if grep -q "has the following vulnerable packages" vulnerable.txt; then
-            echo "::error::Se encontraron dependencias con vulnerabilidades conocidas."
-            exit 1
-          fi
-
-  build-e-integracion:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Configurar .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restaurar dependencias
-        run: dotnet restore Encuestas.slnx
+      - name: Restaurar y auditar dependencias
+        run: dotnet restore Encuestas.slnx --locked-mode
 
       - name: Compilar (warnings como errores)
         run: dotnet build Encuestas.slnx --no-restore --configuration Release -warnaserror
 
-      # Las pruebas de integración usan Testcontainers; el runner de GitHub ya trae Docker.
+      - name: Pruebas unitarias
+        run: dotnet test --solution Encuestas.slnx --no-build --configuration Release --filter-not-trait "Category=Integration"
+
+  # Las pruebas de integración usan Testcontainers; el runner de GitHub ya trae Docker.
+  pruebas-integracion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restaurar dependencias
+        run: dotnet restore Encuestas.slnx --locked-mode
+
+      - name: Compilar
+        run: dotnet build Encuestas.slnx --no-restore --configuration Release
+
       - name: Pruebas de integración
-        run: dotnet test Encuestas.slnx --no-build --configuration Release --filter "Category=Integration" --logger "console;verbosity=normal"
+        run: dotnet test --solution Encuestas.slnx --no-build --configuration Release --filter-trait "Category=Integration"
+
+  # Construye la imagen de producción y la escanea en busca de vulnerabilidades del sistema
+  # base y de las dependencias publicadas.
+  imagen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Construir la imagen
+        run: docker build -t encuestas-web:${{ github.sha }} .
+
+      - name: Escanear la imagen (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: encuestas-web:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'

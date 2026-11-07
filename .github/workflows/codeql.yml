@@ -1,0 +1,29 @@
+name: CodeQL
+
+# Análisis estático de seguridad (SAST). Los resultados aparecen en la pestaña Security del repositorio.
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          build-mode: none
+          queries: security-and-quality
+
+      - name: Analizar
+        uses: github/codeql-action/analyze@v4
