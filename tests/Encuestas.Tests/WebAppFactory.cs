@@ -18,17 +18,18 @@ public class WebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
         .WithDatabase("encuestas_http")
         .Build();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
         Environment.SetEnvironmentVariable(ConnStringEnvVar, _container.GetConnectionString());
     }
 
-    async Task IAsyncLifetime.DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         Environment.SetEnvironmentVariable(ConnStringEnvVar, null);
+        await base.DisposeAsync();
         await _container.DisposeAsync();
-        await DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

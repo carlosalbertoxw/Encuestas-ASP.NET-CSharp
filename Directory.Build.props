@@ -2,13 +2,23 @@
 
   <!-- Ajustes comunes a todos los proyectos de la solución. -->
   <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
 
-    <!-- CAL-06: analizadores de .NET y estilo de código aplicados en cada compilación. -->
+    <!-- Analizadores de .NET y estilo de código aplicados en cada compilación. -->
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Auditoría de dependencias integrada en NuGet: el restore falla si algún paquete
+         (directo o transitivo) tiene una vulnerabilidad conocida de cualquier severidad. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+
+    <!-- Versiones exactas (también las transitivas) fijadas en packages.lock.json. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
 </Project>

@@ -17,14 +17,14 @@ public sealed class MySqlContainerFixture : IAsyncLifetime
 
     public MySqlDataSource DataSource { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
         MigrationRunner.Run(_container.GetConnectionString(), NullLogger.Instance);
         DataSource = new MySqlDataSource(_container.GetConnectionString());
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await DataSource.DisposeAsync();
         await _container.DisposeAsync();
