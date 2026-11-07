@@ -85,15 +85,6 @@ public class TokenServiceTests
 
 public class SupportServicesTests
 {
-    [Theory]
-    [InlineData("demo@encuestas.dev", "d***@encuestas.dev")]
-    [InlineData("sin-arroba", "***")]
-    [InlineData("", "")]
-    public void LogRedaction_enmascara_el_correo(string email, string expected)
-    {
-        Assert.Equal(expected, LogRedaction.Email(email));
-    }
-
     [Fact]
     public void AppUrls_usa_la_url_configurada_y_no_la_de_la_peticion()
     {

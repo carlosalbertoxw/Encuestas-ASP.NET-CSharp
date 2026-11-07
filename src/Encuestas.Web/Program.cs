@@ -177,24 +177,17 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check 
 app.Run();
 return 0;
 
-// Elige el emisor de correo: SMTP si está configurado; si no, en Development se escriben en el
-// log; en cualquier otro entorno es un error de configuración.
+// Los correos siempre salen por SMTP (en Development, a Mailpit según appsettings.Development.json);
+// nunca se escriben en el log, porque llevan enlaces con tokens.
 static void AddEmailSender(WebApplicationBuilder builder)
 {
     var smtp = builder.Configuration.GetSection(SmtpOptions.SectionName).Get<SmtpOptions>() ?? new SmtpOptions();
-    if (!string.IsNullOrWhiteSpace(smtp.Host))
-    {
-        builder.Services.AddSingleton(smtp);
-        builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
-    }
-    else if (builder.Environment.IsDevelopment())
-    {
-        builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
-    }
-    else
+    if (string.IsNullOrWhiteSpace(smtp.Host))
     {
         throw new InvalidOperationException("Falta Smtp:Host (variable de entorno Smtp__Host) para enviar los correos.");
     }
+    builder.Services.AddSingleton(smtp);
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 }
 
 // Necesario para que WebApplicationFactory pueda referenciar el punto de entrada en las pruebas.

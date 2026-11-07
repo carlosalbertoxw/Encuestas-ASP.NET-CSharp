@@ -3,9 +3,13 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Encuestas.Tests;
 
-public class SecurityStampCacheTests
+public sealed class SecurityStampCacheTests : IDisposable
 {
-    private static SecurityStampCache Create() => new(new MemoryCache(new MemoryCacheOptions()));
+    private readonly MemoryCache _memory = new(new MemoryCacheOptions());
+
+    private SecurityStampCache Create() => new(_memory);
+
+    public void Dispose() => _memory.Dispose();
 
     [Fact]
     public async Task GetAsync_cachea_el_sello_y_solo_consulta_una_vez()

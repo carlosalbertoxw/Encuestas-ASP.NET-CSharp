@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
+using Encuestas.Web.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.MySql;
 
 namespace Encuestas.Tests;
@@ -35,6 +39,25 @@ public class WebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        // Las pruebas no envían correos: se capturan en memoria en lugar de ir a Mailpit.
+        builder.ConfigureTestServices(services => services.Replace(ServiceDescriptor.Singleton<IEmailSender>(Emails)));
+    }
+
+    /// <summary>Correos que la aplicación habría enviado durante las pruebas.</summary>
+    public CapturingEmailSender Emails { get; } = new();
+}
+
+/// <summary>Emisor de correo de prueba: guarda los mensajes en lugar de enviarlos.</summary>
+public sealed class CapturingEmailSender : IEmailSender
+{
+    private readonly System.Collections.Concurrent.ConcurrentQueue<(string To, string Subject, string Body)> _sent = new();
+
+    public IReadOnlyCollection<(string To, string Subject, string Body)> Sent => _sent;
+
+    public Task SendAsync(string recipient, string subject, string htmlBody)
+    {
+        _sent.Enqueue((recipient, subject, htmlBody));
+        return Task.CompletedTask;
     }
 }
 

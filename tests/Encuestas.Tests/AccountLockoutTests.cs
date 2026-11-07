@@ -3,9 +3,13 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Encuestas.Tests;
 
-public class AccountLockoutTests
+public sealed class AccountLockoutTests : IDisposable
 {
-    private static AccountLockout Create() => new(new MemoryCache(new MemoryCacheOptions()));
+    private readonly MemoryCache _memory = new(new MemoryCacheOptions());
+
+    private AccountLockout Create() => new(_memory);
+
+    public void Dispose() => _memory.Dispose();
 
     [Fact]
     public void No_bloquea_por_debajo_del_umbral()

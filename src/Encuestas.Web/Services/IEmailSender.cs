@@ -31,7 +31,7 @@ public class SmtpEmailSender(SmtpOptions options) : IEmailSender
 {
     public async Task SendAsync(string recipient, string subject, string htmlBody)
     {
-        var message = new MimeMessage();
+        using var message = new MimeMessage();
         message.From.Add(MailboxAddress.Parse(options.From));
         message.To.Add(MailboxAddress.Parse(recipient));
         message.Subject = subject;
@@ -46,18 +46,5 @@ public class SmtpEmailSender(SmtpOptions options) : IEmailSender
         }
         await client.SendAsync(message);
         await client.DisconnectAsync(quit: true);
-    }
-}
-
-/// <summary>
-/// Escribe el correo en el log en lugar de enviarlo. Solo se registra en Development cuando no
-/// hay SMTP configurado (por ejemplo, en las pruebas); el cuerpo incluye enlaces con tokens.
-/// </summary>
-public class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEmailSender
-{
-    public Task SendAsync(string recipient, string subject, string htmlBody)
-    {
-        logger.LogInformation("[Correo simulado] Para: {To} | Asunto: {Subject}\n{Body}", recipient, subject, htmlBody);
-        return Task.CompletedTask;
     }
 }

@@ -12,15 +12,20 @@ using Microsoft.Extensions.Options;
 
 namespace Encuestas.Tests;
 
-public class AuthServiceTests
+public sealed class AuthServiceTests : IDisposable
 {
     private const string Email = "usuario@test.com";
     private const string Password = "Secreta123";
 
     private readonly PasswordService _passwords = new();
-    private readonly AccountLockout _lockout = new(new MemoryCache(new MemoryCacheOptions()));
+    private readonly MemoryCache _memory = new(new MemoryCacheOptions());
+    private readonly AccountLockout _lockout;
     private readonly FakeUserRepository _users = new();
     private readonly FakeAuthenticationService _auth = new();
+
+    public AuthServiceTests() => _lockout = new AccountLockout(_memory);
+
+    public void Dispose() => _memory.Dispose();
 
     private AuthService CreateService() =>
         new(_users, _passwords, _lockout, NullLogger<AuthService>.Instance);
@@ -169,7 +174,7 @@ public class AuthServiceTests
         }
 
         public Task<User?> GetUserAsync(int id) =>
-            Task.FromResult(Profile?.User.Id == id ? Profile.User : null);
+            Task.FromResult(Profile is { } profile && profile.User.Id == id ? profile.User : null);
 
         public Task<UserProfile?> GetProfileByIdAsync(int id) =>
             Task.FromResult(Profile?.User.Id == id ? Profile : null);

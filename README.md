@@ -17,7 +17,7 @@ Aplicación web de encuestas escrita en C# con ASP.NET Core MVC (.NET 10) y MySQ
 - Perfil público por nombre de usuario (`/User/Index?profile=usuario`).
 - Respuestas: calificación de 1 a 5 estrellas y comentario, **una por usuario y encuesta**.
 - Protección CSRF (antiforgery) en todos los POST y validación en servidor (ViewModels + DataAnnotations) y en cliente (sin jQuery).
-- Rate limiting por IP en login/registro/recuperación más **bloqueo por cuenta**; cabeceras de seguridad (CSP sin `unsafe-inline` en scripts) y logs sin correos en claro.
+- Rate limiting por IP en login/registro/recuperación más **bloqueo por cuenta**; cabeceras de seguridad (CSP sin `unsafe-inline` en scripts) y logs sin correos ni enlaces con tokens.
 - Logs en **JSON** fuera de desarrollo, con `TraceId`/`RequestId` por petición y cabecera `X-Request-Id` en cada respuesta.
 - Acceso a datos con **Dapper** sobre MySqlConnector; migraciones con DbUp aplicadas al arrancar.
 - Sondas `/health/live` (proceso) y `/health/ready` (incluye la base de datos), con `HEALTHCHECK` en la imagen.
@@ -50,7 +50,7 @@ docker compose up -d db mailpit
 dotnet run --project src/Encuestas.Web --launch-profile http
 ```
 
-El perfil `http` de `launchSettings.json` apunta el SMTP a Mailpit (`localhost:1025`). Sin SMTP configurado, en Development los correos se escriben en el log.
+En Development los correos van a Mailpit (`localhost:1025`, configurado en `appsettings.Development.json`); la app no arranca sin SMTP y nunca escribe los correos en el log, porque llevan enlaces con tokens.
 
 ### Usuarios de demostración
 
@@ -67,7 +67,7 @@ En el entorno **Development** (Opción B), si la base está vacía se insertan d
 |----------------------------------------------------|---------------------------------------------------------------------|------------|
 | `ConnectionStrings:Default` (`ConnectionStrings__Default`) | Cadena de conexión de MySQL                                  | `appsettings.Development.json` |
 | `App:BaseUrl` (`App__BaseUrl`)                     | URL pública; base de los enlaces de los correos. **Obligatoria**    | `http://localhost:5090` |
-| `Smtp:Host`, `Smtp:Port` (`Smtp__Host`…)           | Servidor SMTP. **Obligatorio** fuera de Development                 | Mailpit en `launchSettings.json` |
+| `Smtp:Host`, `Smtp:Port` (`Smtp__Host`…)           | Servidor SMTP. **Obligatorio**                                      | Mailpit en `appsettings.Development.json` |
 | `Smtp:UseStartTls`, `Smtp:User`, `Smtp:Password`, `Smtp:From` | STARTTLS (por defecto `true`), credenciales y remitente  | — |
 | `DataProtection:KeysPath` (`DataProtection__KeysPath`) | Directorio donde se guardan las claves de Data Protection      | perfil del usuario |
 
@@ -102,7 +102,7 @@ src/
   Encuestas.Web/      # ASP.NET Core MVC: controladores, vistas Razor, wwwroot (Bootstrap 5.3, sin jQuery)
     Controllers/      # User (inicio, acceso, recuperación), Account (gestión de la cuenta), Poll, Answer, Error
     Models/           # ViewModels con validación DataAnnotations
-    Services/         # AuthService, PasswordService, TokenService, correo (SMTP / log), AppUrls, AccountLockout...
+    Services/         # AuthService, PasswordService, TokenService, SmtpEmailSender, AppUrls, AccountLockout...
     Infrastructure/   # MigrationRunner (DbUp), MySqlTicketStore, DevDataSeeder, DatabaseHealthCheck
     Migrations/       # Scripts SQL versionados, embebidos en el ensamblado
   Encuestas.Data/     # Repositorios con Dapper sobre MySqlConnector (RepositoryResult, PagedResult)
@@ -129,7 +129,7 @@ dotnet test --solution Encuestas.slnx --filter-not-trait "Category=Integration"
 dotnet test --solution Encuestas.slnx --filter-trait "Category=Integration"
 ```
 
-- **Unitarias**: hashing y re-hash (`PasswordService`), flujo de inicio de sesión (`AuthService`), tokens firmados de confirmación, cambio de correo y restablecimiento (`TokenService`), bloqueo por cuenta, caché del sello, paginación, `AppUrls`, enmascarado de correos en logs y validación de ViewModels.
+- **Unitarias**: hashing y re-hash (`PasswordService`), flujo de inicio de sesión (`AuthService`), tokens firmados de confirmación, cambio de correo y restablecimiento (`TokenService`), bloqueo por cuenta, caché del sello, paginación, `AppUrls` y validación de ViewModels.
 - **Integración**: repositorios contra un MySQL 8.4 efímero (incluido el flujo del correo pendiente) y el pipeline HTTP completo con `WebApplicationFactory` (sondas de salud, autorización, login con sesión en BD y antiforgery).
 
 ## Integración continua

@@ -80,8 +80,9 @@ public partial class HttpEndpointTests
     [Fact]
     public async Task Post_sin_token_antiforgery_es_rechazado()
     {
-        var response = await CreateClient().PostAsync("/User/Login", new FormUrlEncodedContent(
-            new Dictionary<string, string> { ["Login.Email"] = "x@y.z", ["Login.Password"] = "loquesea" }), TestContext.Current.CancellationToken);
+        using var form = new FormUrlEncodedContent(
+            new Dictionary<string, string> { ["Login.Email"] = "x@y.z", ["Login.Password"] = "loquesea" });
+        var response = await CreateClient().PostAsync("/User/Login", form, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }

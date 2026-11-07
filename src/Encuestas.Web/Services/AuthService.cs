@@ -28,7 +28,7 @@ public class AuthService(IUserRepository users, PasswordService passwords, Accou
     {
         if (lockout.IsLocked(email))
         {
-            logger.LogWarning("Inicio de sesión bloqueado por exceso de intentos para {Email}", LogRedaction.Email(email));
+            logger.LogWarning("Inicio de sesión bloqueado por exceso de intentos desde {RemoteIp}", http.Connection.RemoteIpAddress);
             return LoginResult.LockedOut;
         }
 
@@ -40,8 +40,9 @@ public class AuthService(IUserRepository users, PasswordService passwords, Accou
         if (outcome == PasswordVerificationOutcome.Failed)
         {
             lockout.RecordFailure(email);
-            logger.LogWarning("Intento de inicio de sesión fallido para {Email} desde {RemoteIp}",
-                LogRedaction.Email(email), http.Connection.RemoteIpAddress);
+            // El correo no se registra: es un dato personal y lo escribe quien intenta entrar.
+            logger.LogWarning("Intento de inicio de sesión fallido (usuario {UserId}) desde {RemoteIp}",
+                profile?.User.Id, http.Connection.RemoteIpAddress);
             return LoginResult.InvalidCredentials;
         }
 
