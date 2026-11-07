@@ -1,27 +1,63 @@
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+
 namespace Encuestas.Web.Services;
 
-/// <summary>Envío de correos transaccionales (confirmación de cuenta, restablecimiento).</summary>
+/// <summary>Envío de correos transaccionales (confirmación de cuenta, cambio de correo, restablecimiento).</summary>
 public interface IEmailSender
 {
     Task SendAsync(string recipient, string subject, string htmlBody);
 }
 
-/// <summary>
-/// Implementación por defecto que registra el correo en el log en lugar de enviarlo. Sirve para
-/// desarrollo y pruebas; en producción debe sustituirse por un proveedor real (SMTP, SendGrid…).
-/// </summary>
-public class LoggingEmailSender : IEmailSender
+/// <summary>Configuración del servidor SMTP (sección <c>Smtp</c> o variables <c>Smtp__*</c>).</summary>
+public class SmtpOptions
 {
-    private readonly ILogger<LoggingEmailSender> _logger;
+    public const string SectionName = "Smtp";
 
-    public LoggingEmailSender(ILogger<LoggingEmailSender> logger)
+    public string? Host { get; set; }
+    public int Port { get; set; } = 587;
+
+    /// <summary>Usa STARTTLS. Desactívalo solo para servidores locales como Mailpit.</summary>
+    public bool UseStartTls { get; set; } = true;
+
+    public string? User { get; set; }
+    public string? Password { get; set; }
+    public string From { get; set; } = "Encuestas <no-reply@encuestas.local>";
+}
+
+/// <summary>Envía los correos por SMTP con MailKit (en local, a Mailpit).</summary>
+public class SmtpEmailSender(SmtpOptions options) : IEmailSender
+{
+    public async Task SendAsync(string recipient, string subject, string htmlBody)
     {
-        _logger = logger;
-    }
+        var message = new MimeMessage();
+        message.From.Add(MailboxAddress.Parse(options.From));
+        message.To.Add(MailboxAddress.Parse(recipient));
+        message.Subject = subject;
+        message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
+        using var client = new SmtpClient();
+        await client.ConnectAsync(options.Host ?? throw new InvalidOperationException("Falta Smtp:Host."), options.Port,
+            options.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+        if (!string.IsNullOrEmpty(options.User))
+        {
+            await client.AuthenticateAsync(options.User, options.Password ?? string.Empty);
+        }
+        await client.SendAsync(message);
+        await client.DisconnectAsync(quit: true);
+    }
+}
+
+/// <summary>
+/// Escribe el correo en el log en lugar de enviarlo. Solo se registra en Development cuando no
+/// hay SMTP configurado (por ejemplo, en las pruebas); el cuerpo incluye enlaces con tokens.
+/// </summary>
+public class LoggingEmailSender(ILogger<LoggingEmailSender> logger) : IEmailSender
+{
     public Task SendAsync(string recipient, string subject, string htmlBody)
     {
-        _logger.LogInformation("[Correo simulado] Para: {To} | Asunto: {Subject}\n{Body}", recipient, subject, htmlBody);
+        logger.LogInformation("[Correo simulado] Para: {To} | Asunto: {Subject}\n{Body}", recipient, subject, htmlBody);
         return Task.CompletedTask;
     }
 }

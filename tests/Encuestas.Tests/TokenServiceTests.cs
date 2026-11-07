@@ -1,4 +1,5 @@
 using Encuestas.Web.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Encuestas.Tests;
@@ -63,4 +64,56 @@ public class TokenServiceTests
 
         Assert.Null(_tokens.ValidateEmailConfirmationToken(tokenAjeno));
     }
+
+    [Fact]
+    public void Token_de_cambio_de_correo_ida_y_vuelta()
+    {
+        var token = _tokens.CreateEmailChangeToken(7, "nuevo@test.com");
+
+        Assert.Equal((7, "nuevo@test.com"), _tokens.ValidateEmailChangeToken(token));
+    }
+
+    [Fact]
+    public void Un_token_de_confirmacion_no_sirve_para_cambiar_el_correo()
+    {
+        var confirmToken = _tokens.CreateEmailConfirmationToken(7);
+
+        Assert.Null(_tokens.ValidateEmailChangeToken(confirmToken));
+        Assert.Null(_tokens.ValidateEmailConfirmationToken(_tokens.CreateEmailChangeToken(7, "a@b.c")));
+    }
+}
+
+public class SupportServicesTests
+{
+    [Theory]
+    [InlineData("demo@encuestas.dev", "d***@encuestas.dev")]
+    [InlineData("sin-arroba", "***")]
+    [InlineData("", "")]
+    public void LogRedaction_enmascara_el_correo(string email, string expected)
+    {
+        Assert.Equal(expected, LogRedaction.Email(email));
+    }
+
+    [Fact]
+    public void AppUrls_usa_la_url_configurada_y_no_la_de_la_peticion()
+    {
+        var urls = new AppUrls(Configure("https://encuestas.example.com"));
+
+        Assert.Equal("https://encuestas.example.com/User/ResetPassword?token=abc",
+            urls.Absolute("/User/ResetPassword?token=abc"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("no-es-url")]
+    [InlineData("ftp://encuestas.example.com")]
+    public void AppUrls_sin_url_valida_falla_al_construirse(string? baseUrl)
+    {
+        Assert.Throws<InvalidOperationException>(() => new AppUrls(Configure(baseUrl)));
+    }
+
+    private static IConfiguration Configure(string? baseUrl) =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["App:BaseUrl"] = baseUrl })
+            .Build();
 }

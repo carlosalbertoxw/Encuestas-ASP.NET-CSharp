@@ -34,12 +34,12 @@
                             <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Usuario</a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" asp-controller="User" asp-action="Index" asp-route-profile="@User.Identity!.Name">Ver perfil</a></li>
-                                <li><a class="dropdown-item" asp-controller="User" asp-action="EditProfile">Editar perfil</a></li>
-                                <li><a class="dropdown-item" asp-controller="User" asp-action="ChangeUser">Cambiar usuario</a></li>
-                                <li><a class="dropdown-item" asp-controller="User" asp-action="ChangeEmail">Cambiar correo electrónico</a></li>
-                                <li><a class="dropdown-item" asp-controller="User" asp-action="ChangePassword">Cambiar contraseña</a></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="EditProfile">Editar perfil</a></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangeUser">Cambiar usuario</a></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangeEmail">Cambiar correo electrónico</a></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Cambiar contraseña</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="User" asp-action="DeleteAccount">Borrar cuenta</a></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="DeleteAccount">Borrar cuenta</a></li>
                                 <li>
                                     <form asp-controller="User" asp-action="CloseSession" method="post">
                                         <button type="submit" class="dropdown-item">Cerrar sesión</button>

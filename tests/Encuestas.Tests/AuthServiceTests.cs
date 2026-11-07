@@ -171,6 +171,9 @@ public class AuthServiceTests
         public Task<User?> GetUserAsync(int id) =>
             Task.FromResult(Profile?.User.Id == id ? Profile.User : null);
 
+        public Task<UserProfile?> GetProfileByIdAsync(int id) =>
+            Task.FromResult(Profile?.User.Id == id ? Profile : null);
+
         public Task<UserProfile?> GetProfileByUserNameAsync(string userName) =>
             Task.FromResult<UserProfile?>(null);
 
@@ -183,7 +186,8 @@ public class AuthServiceTests
         public Task<RepositoryResult> ConfirmEmailAsync(int id) => Task.FromResult(RepositoryResult.Success);
         public Task<RepositoryResult> UpdateNameAsync(int id, string name) => Task.FromResult(RepositoryResult.Success);
         public Task<RepositoryResult> UpdateUserNameAsync(int id, string userName) => Task.FromResult(RepositoryResult.Success);
-        public Task<RepositoryResult> UpdateEmailAsync(int id, string email) => Task.FromResult(RepositoryResult.Success);
+        public Task<RepositoryResult> SetPendingEmailAsync(int id, string email) => Task.FromResult(RepositoryResult.Success);
+        public Task<RepositoryResult> ConfirmEmailChangeAsync(int id, string email, string newSecurityStamp) => Task.FromResult(RepositoryResult.Success);
         public Task<RepositoryResult> ChangePasswordAsync(int id, string passwordHash, string newSecurityStamp) => Task.FromResult(RepositoryResult.Success);
         public Task<RepositoryResult> DeleteAccountAsync(int id) => Task.FromResult(RepositoryResult.Success);
     }

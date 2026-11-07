@@ -9,7 +9,7 @@ public static class Messages
     public const string UpdateError = "Ocurrió un error al actualizar los datos";
 
     public const string InvalidCredentials = "Correo o contraseña incorrectos";
-    // SEG-03: mismo mensaje tanto si el correo ya existía como si el registro procedió,
+    // Mismo mensaje tanto si el correo ya existía como si el registro procedió,
     // para no revelar qué correos tienen cuenta.
     public const string RegisterAcknowledged = "Si los datos son válidos, te enviamos un correo para confirmar la cuenta.";
     public const string UserNameTaken = "El nombre de usuario no está disponible";
@@ -20,6 +20,12 @@ public static class Messages
     public const string PasswordResetSent = "Si el correo corresponde a una cuenta, te enviamos un enlace para restablecer la contraseña.";
     public const string PasswordResetOk = "Tu contraseña se restableció. Ya puedes iniciar sesión.";
     public const string PasswordResetInvalid = "El enlace para restablecer la contraseña no es válido o expiró.";
+
+    public const string SameEmail = "Ese ya es tu correo actual.";
+    public const string EmailChangeRequested = "Te enviamos un enlace al correo nuevo. El cambio se aplicará cuando lo abras; mientras tanto sigues usando tu correo actual.";
+    public const string EmailChanged = "Tu correo se actualizó. Inicia sesión con el correo nuevo.";
+    public const string EmailChangeInvalid = "El enlace para cambiar el correo no es válido o expiró.";
+    public const string EmailInUse = "Ese correo ya lo usa otra cuenta.";
 
     public const string PollSaved = "Los datos se guardaron exitosamente";
     public const string PollUpdated = "Los datos se actualizaron exitosamente";

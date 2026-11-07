@@ -4,8 +4,8 @@ namespace Encuestas.Data;
 
 public interface IPollRepository
 {
-    /// <summary>Encuestas de un usuario, ordenadas por posición.</summary>
-    Task<List<Poll>> GetPollsAsync(int userId);
+    /// <summary>Página de encuestas de un usuario, ordenadas por posición.</summary>
+    Task<PagedResult<Poll>> GetPollsAsync(int userId, int page, int pageSize);
 
     /// <summary>Una encuesta concreta, validando que pertenezca al usuario.</summary>
     Task<Poll?> GetPollAsync(int userId, int pollId);

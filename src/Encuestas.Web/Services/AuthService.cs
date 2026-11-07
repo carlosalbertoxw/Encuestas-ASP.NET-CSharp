@@ -19,47 +19,34 @@ public enum LoginResult
 /// Concentra la lógica de autenticación (verificar credenciales, migrar hashes legados,
 /// emitir la cookie con los claims) para mantenerla fuera de los controladores y poder probarla.
 /// </summary>
-public class AuthService
+public class AuthService(IUserRepository users, PasswordService passwords, AccountLockout lockout, ILogger<AuthService> logger)
 {
     /// <summary>Claim con el sello de seguridad; se compara contra la BD para invalidar sesiones.</summary>
     public const string SecurityStampClaimType = "Encuestas:SecurityStamp";
 
-    private readonly IUserRepository _users;
-    private readonly PasswordService _passwords;
-    private readonly AccountLockout _lockout;
-    private readonly ILogger<AuthService> _logger;
-
-    public AuthService(IUserRepository users, PasswordService passwords, AccountLockout lockout, ILogger<AuthService> logger)
-    {
-        _users = users;
-        _passwords = passwords;
-        _lockout = lockout;
-        _logger = logger;
-    }
-
     public async Task<LoginResult> LoginAsync(HttpContext http, string email, string password)
     {
-        if (_lockout.IsLocked(email))
+        if (lockout.IsLocked(email))
         {
-            _logger.LogWarning("Inicio de sesión bloqueado por exceso de intentos para {Email}", email);
+            logger.LogWarning("Inicio de sesión bloqueado por exceso de intentos para {Email}", LogRedaction.Email(email));
             return LoginResult.LockedOut;
         }
 
-        var profile = await _users.GetProfileByEmailAsync(email);
+        var profile = await users.GetProfileByEmailAsync(email);
         var outcome = profile is null
             ? PasswordVerificationOutcome.Failed
-            : _passwords.Verify(profile.User.PasswordHash, password);
+            : passwords.Verify(profile.User.PasswordHash, password);
 
         if (outcome == PasswordVerificationOutcome.Failed)
         {
-            _lockout.RecordFailure(email);
-            _logger.LogWarning("Intento de inicio de sesión fallido para {Email} desde {RemoteIp}",
-                email, http.Connection.RemoteIpAddress);
+            lockout.RecordFailure(email);
+            logger.LogWarning("Intento de inicio de sesión fallido para {Email} desde {RemoteIp}",
+                LogRedaction.Email(email), http.Connection.RemoteIpAddress);
             return LoginResult.InvalidCredentials;
         }
 
         // Credenciales correctas: se limpia el contador de intentos fallidos.
-        _lockout.Reset(email);
+        lockout.Reset(email);
 
         if (!profile!.User.EmailConfirmed)
         {
@@ -70,12 +57,12 @@ public class AuthService
         {
             // El hash usa parámetros antiguos: se regenera de forma transparente. No rota el
             // sello de seguridad para no cerrar otras sesiones válidas del usuario.
-            await _users.UpdatePasswordAsync(profile.User.Id, _passwords.Hash(password));
-            _logger.LogInformation("Hash de contraseña actualizado para el usuario {UserId}", profile.User.Id);
+            await users.UpdatePasswordAsync(profile.User.Id, passwords.Hash(password));
+            logger.LogInformation("Hash de contraseña actualizado para el usuario {UserId}", profile.User.Id);
         }
 
         await SignInAsync(http, profile);
-        _logger.LogInformation("Inicio de sesión exitoso del usuario {UserId}", profile.User.Id);
+        logger.LogInformation("Inicio de sesión exitoso del usuario {UserId}", profile.User.Id);
         return LoginResult.Success;
     }
 
@@ -94,16 +81,10 @@ public class AuthService
         await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
     }
 
-    /// <summary>Reemite la cookie tras editar perfil, usuario o correo.</summary>
+    /// <summary>Reemite la cookie tras editar perfil, usuario o contraseña.</summary>
     public async Task RefreshClaimsAsync(HttpContext http, int userId)
     {
-        var user = await _users.GetUserAsync(userId);
-        if (user is null)
-        {
-            return;
-        }
-        var profile = await _users.GetProfileByEmailAsync(user.Email);
-        if (profile is not null)
+        if (await users.GetProfileByIdAsync(userId) is { } profile)
         {
             await SignInAsync(http, profile);
         }

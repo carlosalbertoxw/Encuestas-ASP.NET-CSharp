@@ -49,7 +49,7 @@ public static class DevDataSeeder
         await users.ConfirmEmailAsync(ana.User.Id);
         await users.UpdateUserNameAsync(ana.User.Id, "ana");
         await users.UpdateNameAsync(ana.User.Id, "Ana");
-        var poll = (await polls.GetPollsAsync(demo.User.Id)).First();
+        var poll = (await polls.GetPollsAsync(demo.User.Id, 1, 1)).Items[0];
         await answers.AddAnswerAsync(new Answer
         {
             Stars = 5,

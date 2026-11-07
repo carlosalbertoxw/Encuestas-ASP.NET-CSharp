@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "http": {
@@ -7,7 +7,10 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5090",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Smtp__Host": "localhost",
+        "Smtp__Port": "1025",
+        "Smtp__UseStartTls": "false"
       }
     },
     "https": {
@@ -16,7 +19,11 @@
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7087;http://localhost:5090",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "App__BaseUrl": "https://localhost:7087",
+        "Smtp__Host": "localhost",
+        "Smtp__Port": "1025",
+        "Smtp__UseStartTls": "false"
       }
     }
   }

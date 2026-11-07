@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Security.Claims;
 using Encuestas.Data;
 using Encuestas.Model;
 using Encuestas.Web.Models;
@@ -10,34 +8,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace Encuestas.Web.Controllers;
 
 [Authorize]
-public class PollController : Controller
+public class PollController(IPollRepository polls, ILogger<PollController> logger) : Controller
 {
-    private readonly IPollRepository _polls;
-    private readonly ILogger<PollController> _logger;
-
-    public PollController(IPollRepository polls, ILogger<PollController> logger)
-    {
-        _polls = polls;
-        _logger = logger;
-    }
-
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!, CultureInfo.InvariantCulture);
-
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1)
     {
-        ViewData["Title"] = "Tablero";
         ViewBag.Message = TempData["Message"];
-        var polls = await _polls.GetPollsAsync(CurrentUserId);
-        return View(polls);
+        return View(await polls.GetPollsAsync(User.GetUserId(), page, Paging.DefaultPageSize));
     }
 
     [HttpGet]
-    public IActionResult Add()
-    {
-        ViewData["Title"] = "Agregar encuesta";
-        return View("Form", new PollFormViewModel());
-    }
+    public IActionResult Add() => View("Form", new PollFormViewModel());
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -49,33 +30,15 @@ public class PollController : Controller
             return RedirectToAction("Index");
         }
 
-        var poll = new Poll
-        {
-            Title = model.Title,
-            Description = model.Description,
-            Position = model.Position,
-            UserId = CurrentUserId
-        };
-        TempData["Message"] = await _polls.AddPollAsync(poll) ? Messages.PollSaved : Messages.PollSaveError;
+        TempData["Message"] = await polls.AddPollAsync(model.ToPoll(User.GetUserId())) ? Messages.PollSaved : Messages.PollSaveError;
         return RedirectToAction("Index");
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var poll = await _polls.GetPollAsync(CurrentUserId, id);
-        if (poll is null)
-        {
-            return NotFound();
-        }
-        ViewData["Title"] = "Editar encuesta";
-        return View("Form", new PollFormViewModel
-        {
-            Id = poll.Id,
-            Title = poll.Title,
-            Description = poll.Description,
-            Position = poll.Position
-        });
+        var poll = await polls.GetPollAsync(User.GetUserId(), id);
+        return poll is null ? NotFound() : View("Form", PollFormViewModel.From(poll));
     }
 
     [HttpPost]
@@ -88,15 +51,7 @@ public class PollController : Controller
             return RedirectToAction("Index");
         }
 
-        var poll = new Poll
-        {
-            Id = model.Id,
-            Title = model.Title,
-            Description = model.Description,
-            Position = model.Position,
-            UserId = CurrentUserId
-        };
-        TempData["Message"] = await _polls.UpdatePollAsync(poll) ? Messages.PollUpdated : Messages.UpdateError;
+        TempData["Message"] = await polls.UpdatePollAsync(model.ToPoll(User.GetUserId())) ? Messages.PollUpdated : Messages.UpdateError;
         return RedirectToAction("Index");
     }
 
@@ -104,20 +59,15 @@ public class PollController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        if (id < 1)
+        var userId = User.GetUserId();
+        if (id >= 1 && await polls.DeletePollAsync(userId, id))
         {
-            TempData["Message"] = Messages.ValidationError;
-            return RedirectToAction("Index");
-        }
-
-        if (await _polls.DeletePollAsync(CurrentUserId, id))
-        {
-            _logger.LogInformation("Encuesta {PollId} eliminada por el usuario {UserId}", id, CurrentUserId);
+            logger.LogInformation("Encuesta {PollId} eliminada por el usuario {UserId}", id, userId);
             TempData["Message"] = Messages.PollDeleted;
         }
         else
         {
-            TempData["Message"] = Messages.PollDeleteError;
+            TempData["Message"] = id < 1 ? Messages.ValidationError : Messages.PollDeleteError;
         }
         return RedirectToAction("Index");
     }

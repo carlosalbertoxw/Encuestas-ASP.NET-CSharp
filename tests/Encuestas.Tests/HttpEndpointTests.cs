@@ -19,19 +19,22 @@ public partial class HttpEndpointTests
     private HttpClient CreateClient() =>
         _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-    [Fact]
-    public async Task Health_responde_saludable()
+    [Theory]
+    [InlineData("/health/live")]
+    [InlineData("/health/ready")]
+    public async Task Health_responde_saludable(string path)
     {
-        var response = await CreateClient().GetAsync("/health");
+        var response = await CreateClient().GetAsync(path, TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
-        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.True(response.Headers.Contains("X-Request-Id"));
     }
 
     [Fact]
     public async Task Ruta_protegida_sin_sesion_redirige_al_login()
     {
-        var response = await CreateClient().GetAsync("/Poll/Index");
+        var response = await CreateClient().GetAsync("/Poll/Index", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Contains("/User/Index", response.Headers.Location!.OriginalString, StringComparison.Ordinal);
@@ -78,7 +81,7 @@ public partial class HttpEndpointTests
     public async Task Post_sin_token_antiforgery_es_rechazado()
     {
         var response = await CreateClient().PostAsync("/User/Login", new FormUrlEncodedContent(
-            new Dictionary<string, string> { ["Login.Email"] = "x@y.z", ["Login.Password"] = "loquesea" }));
+            new Dictionary<string, string> { ["Login.Email"] = "x@y.z", ["Login.Password"] = "loquesea" }), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }

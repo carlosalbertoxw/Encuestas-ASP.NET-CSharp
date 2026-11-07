@@ -16,7 +16,7 @@ public class HomeViewModel
 public class LoginViewModel
 {
     // Sin longitud mínima: cuentas legadas podrían tener contraseñas más cortas que la política actual.
-    [Required, EmailAddress, StringLength(50)]
+    [Required, EmailAddress, StringLength(254)]
     public string Email { get; set; } = string.Empty;
 
     [Required, StringLength(50)]
@@ -25,7 +25,7 @@ public class LoginViewModel
 
 public class RegisterViewModel
 {
-    [Required, EmailAddress, StringLength(50)]
+    [Required, EmailAddress, StringLength(254)]
     public string Email { get; set; } = string.Empty;
 
     [Required, StringLength(50, MinimumLength = 6)]
@@ -52,7 +52,7 @@ public class ChangeUserViewModel
 
 public class ChangeEmailViewModel
 {
-    [Required, EmailAddress, StringLength(50)]
+    [Required, EmailAddress, StringLength(254)]
     public string Email { get; set; } = string.Empty;
 
     [Required, StringLength(50)]
@@ -79,7 +79,7 @@ public class DeleteAccountViewModel
 
 public class ForgotPasswordViewModel
 {
-    [Required, EmailAddress, StringLength(50)]
+    [Required, EmailAddress, StringLength(254)]
     public string Email { get; set; } = string.Empty;
 }
 

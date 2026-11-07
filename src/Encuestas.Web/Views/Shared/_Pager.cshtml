@@ -1,0 +1,17 @@
+@model PagerViewModel
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.HasPrevious ? "" : "disabled")">
+                <a class="page-link" asp-all-route-data="Model.RouteFor(Model.Page - 1)">Anterior</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">@Model.Page / @Model.TotalPages</span>
+            </li>
+            <li class="page-item @(Model.HasNext ? "" : "disabled")">
+                <a class="page-link" asp-all-route-data="Model.RouteFor(Model.Page + 1)">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}

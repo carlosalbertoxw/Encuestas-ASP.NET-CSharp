@@ -8,11 +8,7 @@ public class ErrorController : Controller
 {
     /// <summary>Página genérica para excepciones no controladas (producción).</summary>
     [Route("/Error")]
-    public IActionResult Index()
-    {
-        ViewData["Title"] = "Error";
-        return View("Error");
-    }
+    public IActionResult Index() => View("Error");
 
     /// <summary>
     /// Punto de re-ejecución de <c>UseStatusCodePagesWithReExecute</c>. El middleware conserva
@@ -20,14 +16,6 @@ public class ErrorController : Controller
     /// código, sin sobrescribirlo, para no enmascarar todos los errores como 404.
     /// </summary>
     [Route("/Error/NotFound")]
-    public IActionResult HandleStatusCode()
-    {
-        if (Response.StatusCode == StatusCodes.Status404NotFound)
-        {
-            ViewData["Title"] = "Error 404";
-            return View("Error404");
-        }
-        ViewData["Title"] = "Error";
-        return View("Error");
-    }
+    public IActionResult HandleStatusCode() =>
+        View(Response.StatusCode == StatusCodes.Status404NotFound ? "Error404" : "Error");
 }

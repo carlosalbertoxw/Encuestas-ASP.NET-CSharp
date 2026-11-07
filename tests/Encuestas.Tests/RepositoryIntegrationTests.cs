@@ -81,7 +81,7 @@ public class RepositoryIntegrationTests
         var intruder = (await _users.GetProfileByEmailAsync("intruso@test.com"))!.User.Id;
 
         await _polls.AddPollAsync(new Poll { Title = "Mía", Description = "d", Position = 1, UserId = owner });
-        var poll = Assert.Single(await _polls.GetPollsAsync(owner));
+        var poll = Assert.Single((await _polls.GetPollsAsync(owner, 1, 10)).Items);
 
         Assert.Null(await _polls.GetPollAsync(intruder, poll.Id));
         Assert.False(await _polls.DeletePollAsync(intruder, poll.Id));
@@ -94,7 +94,7 @@ public class RepositoryIntegrationTests
         await _users.CreateUserAsync("cascada@test.com", "hash", "s");
         var userId = (await _users.GetProfileByEmailAsync("cascada@test.com"))!.User.Id;
         await _polls.AddPollAsync(new Poll { Title = "t", Description = "d", Position = 1, UserId = userId });
-        var poll = (await _polls.GetPollsAsync(userId)).Single();
+        var poll = (await _polls.GetPollsAsync(userId, 1, 10)).Items.Single();
         await _answers.AddAnswerAsync(new Answer { Stars = 5, Comment = "c", PollId = poll.Id, UserId = userId });
 
         Assert.Equal(RepositoryResult.Success, await _users.DeleteAccountAsync(userId));
@@ -110,7 +110,7 @@ public class RepositoryIntegrationTests
         await _users.CreateUserAsync("encuestador@test.com", "hash", "s");
         var ownerId = (await _users.GetProfileByEmailAsync("encuestador@test.com"))!.User.Id;
         await _polls.AddPollAsync(new Poll { Title = "t", Description = "d", Position = 1, UserId = ownerId });
-        var poll = (await _polls.GetPollsAsync(ownerId)).Single();
+        var poll = (await _polls.GetPollsAsync(ownerId, 1, 10)).Items.Single();
 
         // 12 usuarios distintos responden una vez cada uno (UNIQUE por usuario y encuesta).
         for (var i = 0; i < 12; i++)
@@ -143,7 +143,7 @@ public class RepositoryIntegrationTests
         var ownerId = (await _users.GetProfileByEmailAsync("dueno-enc@test.com"))!.User.Id;
         var responderId = (await _users.GetProfileByEmailAsync("respondedor@test.com"))!.User.Id;
         await _polls.AddPollAsync(new Poll { Title = "t", Description = "d", Position = 1, UserId = ownerId });
-        var poll = (await _polls.GetPollsAsync(ownerId)).Single();
+        var poll = (await _polls.GetPollsAsync(ownerId, 1, 10)).Items.Single();
 
         Assert.Equal(RepositoryResult.Success,
             await _answers.AddAnswerAsync(new Answer { Stars = 4, Comment = "a", PollId = poll.Id, UserId = responderId }));
@@ -160,5 +160,55 @@ public class RepositoryIntegrationTests
         Assert.False((await _users.GetUserAsync(userId))!.EmailConfirmed);
         Assert.Equal(RepositoryResult.Success, await _users.ConfirmEmailAsync(userId));
         Assert.True((await _users.GetUserAsync(userId))!.EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task Polls_se_paginan_por_posicion()
+    {
+        await _users.CreateUserAsync("paginas@test.com", "hash", "s");
+        var userId = (await _users.GetProfileByEmailAsync("paginas@test.com"))!.User.Id;
+        for (var i = 12; i >= 1; i--)
+        {
+            await _polls.AddPollAsync(new Poll { Title = "t" + i, Description = "d", Position = i, UserId = userId });
+        }
+
+        var second = await _polls.GetPollsAsync(userId, page: 2, pageSize: 10);
+
+        Assert.Equal(12, second.TotalCount);
+        Assert.Equal([11, 12], second.Items.Select(p => p.Position));
+    }
+
+    [Fact]
+    public async Task El_correo_pendiente_solo_se_aplica_al_confirmarlo()
+    {
+        await _users.CreateUserAsync("viejo@test.com", "hash", "sello-1");
+        var userId = (await _users.GetProfileByEmailAsync("viejo@test.com"))!.User.Id;
+
+        Assert.Equal(RepositoryResult.Success, await _users.SetPendingEmailAsync(userId, "nuevo@test.com"));
+        var pending = await _users.GetUserAsync(userId);
+        Assert.Equal("viejo@test.com", pending!.Email);
+        Assert.Equal("nuevo@test.com", pending.PendingEmail);
+
+        // Un enlace para otra dirección (p. ej. de una solicitud anterior) no aplica nada.
+        Assert.Equal(RepositoryResult.NotFound, await _users.ConfirmEmailChangeAsync(userId, "otro@test.com", "sello-2"));
+        Assert.Equal(RepositoryResult.Success, await _users.ConfirmEmailChangeAsync(userId, "nuevo@test.com", "sello-2"));
+
+        var changed = await _users.GetUserAsync(userId);
+        Assert.Equal("nuevo@test.com", changed!.Email);
+        Assert.Null(changed.PendingEmail);
+        Assert.True(changed.EmailConfirmed);
+        Assert.Equal("sello-2", changed.SecurityStamp);
+    }
+
+    [Fact]
+    public async Task Confirmar_un_correo_que_ya_usa_otra_cuenta_devuelve_Duplicate()
+    {
+        await _users.CreateUserAsync("ocupado@test.com", "hash", "s");
+        await _users.CreateUserAsync("quiere-cambiar@test.com", "hash", "s");
+        var userId = (await _users.GetProfileByEmailAsync("quiere-cambiar@test.com"))!.User.Id;
+
+        await _users.SetPendingEmailAsync(userId, "ocupado@test.com");
+
+        Assert.Equal(RepositoryResult.Duplicate, await _users.ConfirmEmailChangeAsync(userId, "ocupado@test.com", "s2"));
     }
 }

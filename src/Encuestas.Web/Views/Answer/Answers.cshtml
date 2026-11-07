@@ -1,15 +1,18 @@
-@using Encuestas.Data
-@model PagedResult<Answer>
+@model AnswersViewModel
+@{
+    ViewData["Title"] = $"Respuestas: {Model.Poll.Title}";
+    var pager = PagerViewModel.For(Model.Answers, new Dictionary<string, string> { ["id"] = Model.Poll.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) });
+}
 <div class="mt-3">
     <partial name="_Message" />
     <h4 class="text-center mb-1">@ViewData["Title"]</h4>
-    <p class="text-center text-secondary">@Model.TotalCount respuesta(s)</p>
+    <p class="text-center text-secondary">@Model.Answers.TotalCount respuesta(s)</p>
 
-    @if (Model.TotalCount == 0)
+    @if (Model.Answers.TotalCount == 0)
     {
         <p class="text-center text-secondary">Esta encuesta aún no tiene respuestas.</p>
     }
-    @foreach (var item in Model.Items)
+    @foreach (var item in Model.Answers.Items)
     {
         <div class="card mb-3">
             <div class="card-body">
@@ -30,20 +33,5 @@
         </div>
     }
 
-    @if (Model.TotalPages > 1)
-    {
-        <nav aria-label="Paginación de respuestas">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(Model.HasPrevious ? "" : "disabled")">
-                    <a class="page-link" asp-action="Answers" asp-route-id="@ViewBag.PollId" asp-route-page="@(Model.Page - 1)">Anterior</a>
-                </li>
-                <li class="page-item disabled">
-                    <span class="page-link">@Model.Page / @Model.TotalPages</span>
-                </li>
-                <li class="page-item @(Model.HasNext ? "" : "disabled")">
-                    <a class="page-link" asp-action="Answers" asp-route-id="@ViewBag.PollId" asp-route-page="@(Model.Page + 1)">Siguiente</a>
-                </li>
-            </ul>
-        </nav>
-    }
+    <partial name="_Pager" model="pager" />
 </div>

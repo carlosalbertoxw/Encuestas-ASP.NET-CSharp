@@ -3,7 +3,7 @@ using MySqlConnector;
 
 namespace Encuestas.Web.Infrastructure;
 
-/// <summary>Comprueba la conectividad con MySQL para el endpoint <c>/health</c> (CAL-03).</summary>
+/// <summary>Comprueba la conectividad con MySQL para la sonda <c>/health/ready</c>.</summary>
 public class DatabaseHealthCheck : IHealthCheck
 {
     private readonly MySqlDataSource _dataSource;

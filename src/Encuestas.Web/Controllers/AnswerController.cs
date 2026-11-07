@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Security.Claims;
 using Encuestas.Data;
 using Encuestas.Model;
 using Encuestas.Web.Models;
@@ -10,40 +8,21 @@ using Microsoft.AspNetCore.Mvc;
 namespace Encuestas.Web.Controllers;
 
 [Authorize]
-public class AnswerController : Controller
+public class AnswerController(IPollRepository polls, IAnswerRepository answers) : Controller
 {
-    private const int PageSize = 10;
-
-    private readonly IPollRepository _polls;
-    private readonly IAnswerRepository _answers;
-
-    public AnswerController(IPollRepository polls, IAnswerRepository answers)
-    {
-        _polls = polls;
-        _answers = answers;
-    }
-
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!, CultureInfo.InvariantCulture);
-
     /// <summary>Formulario para responder una encuesta (propia o de otro usuario).</summary>
     [HttpGet]
     public async Task<IActionResult> Add(int id)
     {
-        var poll = await _polls.GetPollByIdAsync(id);
-        if (poll is null)
-        {
-            return NotFound();
-        }
-        ViewData["Title"] = "Responder encuesta";
-        return View("Form", poll);
+        var poll = await polls.GetPollByIdAsync(id);
+        return poll is null ? NotFound() : View("Form", poll);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int id, AnswerFormViewModel model)
     {
-        var poll = await _polls.GetPollByIdAsync(id);
-        if (poll is null)
+        if (await polls.GetPollByIdAsync(id) is null)
         {
             return NotFound();
         }
@@ -59,9 +38,9 @@ public class AnswerController : Controller
             Stars = model.Stars,
             Comment = model.Comment ?? string.Empty,
             PollId = id,
-            UserId = CurrentUserId
+            UserId = User.GetUserId()
         };
-        TempData["Message"] = await _answers.AddAnswerAsync(answer) switch
+        TempData["Message"] = await answers.AddAnswerAsync(answer) switch
         {
             RepositoryResult.Success => Messages.AnswerSaved,
             RepositoryResult.Duplicate => Messages.AnswerDuplicate,
@@ -74,14 +53,12 @@ public class AnswerController : Controller
     [HttpGet]
     public async Task<IActionResult> Answers(int id, int page = 1)
     {
-        var poll = await _polls.GetPollAsync(CurrentUserId, id);
+        var poll = await polls.GetPollAsync(User.GetUserId(), id);
         if (poll is null)
         {
             return NotFound();
         }
-        ViewData["Title"] = $"Respuestas: {poll.Title}";
-        ViewBag.PollId = id;
-        var answers = await _answers.GetAnswersForPollAsync(id, page, PageSize);
-        return View(answers);
+        var result = await answers.GetAnswersForPollAsync(id, page, Paging.DefaultPageSize);
+        return View(new AnswersViewModel(poll, result));
     }
 }

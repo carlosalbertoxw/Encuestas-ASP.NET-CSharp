@@ -7,3 +7,13 @@ public record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, lon
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
 }
+
+/// <summary>Valores de paginación comunes a los listados.</summary>
+public static class Paging
+{
+    public const int DefaultPageSize = 10;
+
+    /// <summary>Corrige valores fuera de rango que lleguen desde la URL.</summary>
+    public static (int Page, int PageSize) Normalize(int page, int pageSize) =>
+        (Math.Max(page, 1), pageSize < 1 ? DefaultPageSize : pageSize);
+}
