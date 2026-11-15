@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="dbup-mysql" Version="6.1.0" />
-    <PackageReference Include="MailKit" Version="4.18.2" />
+    <PackageReference Include="MailKit" Version="5.0.0" />
     <PackageReference Include="MySqlConnector.DependencyInjection" Version="2.6.2" />
   </ItemGroup>
 
