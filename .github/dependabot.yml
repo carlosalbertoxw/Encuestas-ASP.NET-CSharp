@@ -9,6 +9,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # La app apunta a .NET 10 (LTS) y global.json fija el SDK 10: el salto de versión
+    # mayor de las imágenes se hace a mano junto con TargetFramework y global.json.
+    ignore:
+      - dependency-name: dotnet/sdk
+        update-types: ["version-update:semver-major"]
+      - dependency-name: dotnet/aspnet
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker-compose
     directory: /

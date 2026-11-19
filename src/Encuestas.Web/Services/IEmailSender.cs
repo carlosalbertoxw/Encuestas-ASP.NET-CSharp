@@ -44,7 +44,8 @@ public class SmtpEmailSender(SmtpOptions options) : IEmailSender
         {
             await client.AuthenticateAsync(options.User, options.Password ?? string.Empty);
         }
-        await client.SendAsync(message);
+        // MailKit 5 envía a través de una solicitud de envío en lugar de recibir el mensaje directamente.
+        await client.SendAsync(new SmtpSendRequest(message));
         await client.DisconnectAsync(quit: true);
     }
 }
