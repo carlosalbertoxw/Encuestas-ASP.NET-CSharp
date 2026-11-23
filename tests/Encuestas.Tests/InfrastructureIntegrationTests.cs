@@ -84,9 +84,12 @@ public sealed class InfrastructureIntegrationTests(MySqlContainerFixture fixture
 
     private async Task DispatchAllAsync(IEmailSender sender)
     {
-        while (await _outbox.DispatchBatchAsync(sender, NullLogger.Instance, TestContext.Current.CancellationToken) > 0)
+        int sent;
+        do
         {
+            sent = await _outbox.DispatchBatchAsync(sender, NullLogger.Instance, TestContext.Current.CancellationToken);
         }
+        while (sent > 0);
     }
 
     private async Task<int> CountRowsAsync(string recipient)
