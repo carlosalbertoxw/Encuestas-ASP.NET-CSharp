@@ -9,7 +9,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-encuestas}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-encuestas}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
     # El esquema lo aplican las migraciones DbUp al arrancar la aplicación
     # (src/Encuestas.Web/Migrations); el contenedor solo crea la base vacía.
     volumes:
@@ -22,12 +22,12 @@ services:
 
   # Servidor SMTP de pruebas: captura todos los correos y los muestra en http://localhost:8025.
   mailpit:
-    image: axllent/mailpit:v1.33
+    image: axllent/mailpit:v1.34
     container_name: encuestas-mailpit
     restart: unless-stopped
     ports:
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
-      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
 
   web:
     build:

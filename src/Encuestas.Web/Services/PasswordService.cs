@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace Encuestas.Web.Services;
 
@@ -12,15 +13,24 @@ public enum PasswordVerificationOutcome
 }
 
 /// <summary>
-/// Hashing y verificación de contraseñas con PBKDF2 (ASP.NET Core Identity). Cuando Identity
-/// endurece sus parámetros por defecto, <see cref="Verify"/> señala con
-/// <see cref="PasswordVerificationOutcome.SuccessRehashNeeded"/> que el hash almacenado debe
-/// regenerarse; el flujo de inicio de sesión lo actualiza de forma transparente.
+/// Hashing y verificación de contraseñas con PBKDF2-HMAC-SHA512 (ASP.NET Core Identity). Si el
+/// hash almacenado usa menos iteraciones que las actuales, <see cref="Verify"/> devuelve
+/// <see cref="PasswordVerificationOutcome.SuccessRehashNeeded"/> y el inicio de sesión lo regenera.
 /// </summary>
 public class PasswordService
 {
+    /// <summary>Iteraciones recomendadas por OWASP para PBKDF2-HMAC-SHA512.</summary>
+    public const int IterationCount = 210_000;
+
     private static readonly object HasherContext = new();
-    private readonly PasswordHasher<object> _hasher = new();
+    private readonly PasswordHasher<object> _hasher =
+        new(Options.Create(new PasswordHasherOptions { IterationCount = IterationCount }));
+
+    // Hash de una contraseña aleatoria: verificarlo cuesta lo mismo que una cuenta real.
+    private readonly Lazy<string> _dummyHash;
+
+    public PasswordService() =>
+        _dummyHash = new Lazy<string>(() => Hash(Guid.NewGuid().ToString()));
 
     public string Hash(string password) => _hasher.HashPassword(HasherContext, password);
 
@@ -41,4 +51,10 @@ public class PasswordService
             return PasswordVerificationOutcome.Failed;
         }
     }
+
+    /// <summary>
+    /// Hace el mismo trabajo que <see cref="Verify"/> cuando la cuenta no existe, para que el
+    /// tiempo de respuesta no revele qué correos están registrados.
+    /// </summary>
+    public void VerifyAgainstDummy(string password) => Verify(_dummyHash.Value, password);
 }

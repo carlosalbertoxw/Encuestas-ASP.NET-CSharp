@@ -21,10 +21,8 @@ public class MySqlTicketStore(MySqlDataSource dataSource) : ITicketStore
         var key = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var userId = int.Parse(ticket.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!, CultureInfo.InvariantCulture);
 
+        // Las sesiones caducadas las borra DatabaseCleanupService.
         await using var connection = await dataSource.OpenConnectionAsync();
-        // Limpieza oportunista de sesiones caducadas, sin necesidad de un proceso aparte.
-        await connection.ExecuteAsync(
-            "DELETE FROM a_sessions WHERE s_expires_at < UTC_TIMESTAMP() LIMIT 100");
         await connection.ExecuteAsync(
             "INSERT INTO a_sessions(s_key, s_user_key, s_ticket, s_expires_at) VALUES(@key, @userId, @ticket, @expires)",
             new { key, userId, ticket = Serialize(ticket), expires = Expiration(ticket) });

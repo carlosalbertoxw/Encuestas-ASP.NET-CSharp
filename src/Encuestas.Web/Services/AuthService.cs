@@ -26,20 +26,27 @@ public class AuthService(IUserRepository users, PasswordService passwords, Accou
 
     public async Task<LoginResult> LoginAsync(HttpContext http, string email, string password)
     {
-        if (lockout.IsLocked(email))
+        if (await lockout.IsLockedAsync(email))
         {
             logger.LogWarning("Inicio de sesión bloqueado por exceso de intentos desde {RemoteIp}", http.Connection.RemoteIpAddress);
             return LoginResult.LockedOut;
         }
 
         var profile = await users.GetProfileByEmailAsync(email);
-        var outcome = profile is null
-            ? PasswordVerificationOutcome.Failed
-            : passwords.Verify(profile.User.PasswordHash, password);
+        PasswordVerificationOutcome outcome;
+        if (profile is null)
+        {
+            passwords.VerifyAgainstDummy(password);
+            outcome = PasswordVerificationOutcome.Failed;
+        }
+        else
+        {
+            outcome = passwords.Verify(profile.User.PasswordHash, password);
+        }
 
         if (outcome == PasswordVerificationOutcome.Failed)
         {
-            lockout.RecordFailure(email);
+            await lockout.RecordFailureAsync(email);
             // El correo no se registra: es un dato personal y lo escribe quien intenta entrar.
             logger.LogWarning("Intento de inicio de sesión fallido (usuario {UserId}) desde {RemoteIp}",
                 profile?.User.Id, http.Connection.RemoteIpAddress);
@@ -47,7 +54,7 @@ public class AuthService(IUserRepository users, PasswordService passwords, Accou
         }
 
         // Credenciales correctas: se limpia el contador de intentos fallidos.
-        lockout.Reset(email);
+        await lockout.ResetAsync(email);
 
         if (!profile!.User.EmailConfirmed)
         {

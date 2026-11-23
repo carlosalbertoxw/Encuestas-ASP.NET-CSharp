@@ -4,7 +4,10 @@ using MimeKit;
 
 namespace Encuestas.Web.Services;
 
-/// <summary>Envío de correos transaccionales (confirmación de cuenta, cambio de correo, restablecimiento).</summary>
+/// <summary>
+/// Transporte de los correos transaccionales. Los controladores no lo usan directamente: encolan
+/// en <see cref="Infrastructure.EmailOutbox"/> y el despachador en segundo plano llama a este emisor.
+/// </summary>
 public interface IEmailSender
 {
     Task SendAsync(string recipient, string subject, string htmlBody);
@@ -37,7 +40,8 @@ public class SmtpEmailSender(SmtpOptions options) : IEmailSender
         message.Subject = subject;
         message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
-        using var client = new SmtpClient();
+        // Tiempo máximo por operación SMTP (MailKit espera 2 minutos por defecto).
+        using var client = new SmtpClient { Timeout = 10_000 };
         await client.ConnectAsync(options.Host ?? throw new InvalidOperationException("Falta Smtp:Host."), options.Port,
             options.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
         if (!string.IsNullOrEmpty(options.User))

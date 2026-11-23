@@ -32,8 +32,8 @@
       },
       "Dapper": {
         "type": "Transitive",
-        "resolved": "2.1.89",
-        "contentHash": "1VjFE664wnxvuhlgP8kS4PeFFF4jqD3VkbIHW6Zlc52zuibgcz5ICnIHcQXlTp6pURpPNGLV0ZpNe5x9KePJnA=="
+        "resolved": "2.1.100",
+        "contentHash": "zKwgGfxkDIVLGU2WIsl57DwTgj17+fa5v0u2eiVMxU92GXN2fRIn2M8QMGtyGFrPSbVOYKgGFxAxEFL6CB9tTw=="
       },
       "dbup-core": {
         "type": "Transitive",
@@ -53,7 +53,7 @@
       "encuestas.data": {
         "type": "Project",
         "dependencies": {
-          "Dapper": "[2.1.89, )",
+          "Dapper": "[2.1.100, )",
           "Encuestas.Model": "[1.0.0, )",
           "MySqlConnector": "[3.0.0, )"
         }
