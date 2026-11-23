@@ -18,16 +18,19 @@ public sealed class OutboxDispatcher(EmailOutbox outbox, IEmailSender sender, IL
         {
             try
             {
-                while (await outbox.DispatchBatchAsync(sender, logger, stoppingToken) > 0)
+                int sent;
+                do
                 {
+                    sent = await outbox.DispatchBatchAsync(sender, logger, stoppingToken);
                 }
+                while (sent > 0);
                 await outbox.WaitForMessagesAsync(PollInterval, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
                 return;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // P. ej. la base de datos no responde: se reintenta más tarde sin tumbar la app.
                 logger.LogError(ex, "Error al procesar la bandeja de salida de correos");
