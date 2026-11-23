@@ -8,13 +8,15 @@ public class PollFormViewModel
 {
     public int Id { get; set; }
 
-    [Required, StringLength(250)]
+    [Required(ErrorMessage = ValidationMessages.Required)]
+    [StringLength(250, ErrorMessage = ValidationMessages.MaxLength)]
     public string Title { get; set; } = string.Empty;
 
-    [Required, StringLength(500)]
+    [Required(ErrorMessage = ValidationMessages.Required)]
+    [StringLength(500, ErrorMessage = ValidationMessages.MaxLength)]
     public string Description { get; set; } = string.Empty;
 
-    [Range(1, 999999)]
+    [Range(1, 999999, ErrorMessage = ValidationMessages.Range)]
     public int Position { get; set; }
 
     public static PollFormViewModel From(Poll poll) => new()
@@ -38,10 +40,10 @@ public class PollFormViewModel
 
 public class AnswerFormViewModel
 {
-    [Range(1, 5)]
+    [Range(1, 5, ErrorMessage = ValidationMessages.Range)]
     public int Stars { get; set; }
 
-    [StringLength(1000)]
+    [StringLength(1000, ErrorMessage = ValidationMessages.MaxLength)]
     public string? Comment { get; set; }
 }
 

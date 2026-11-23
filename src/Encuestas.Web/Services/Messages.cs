@@ -13,10 +13,12 @@ public static class Messages
     // para no revelar qué correos tienen cuenta.
     public const string RegisterAcknowledged = "Si los datos son válidos, te enviamos un correo para confirmar la cuenta.";
     public const string UserNameTaken = "El nombre de usuario no está disponible";
-    public const string EmailNotConfirmed = "Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.";
+    public const string EmailNotConfirmed = "Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada o pide un enlace nuevo.";
     public const string AccountLocked = "Demasiados intentos fallidos. Intenta de nuevo en unos minutos.";
     public const string EmailConfirmed = "Tu correo fue confirmado. Ya puedes iniciar sesión.";
-    public const string EmailConfirmationInvalid = "El enlace de confirmación no es válido o expiró.";
+    public const string EmailConfirmationInvalid = "El enlace de confirmación no es válido o expiró. Puedes pedir uno nuevo.";
+    public const string ConfirmationResent = "Si el correo corresponde a una cuenta pendiente de confirmar, te enviamos un enlace nuevo.";
+    public const string TooManyRequests = "Demasiados intentos. Espera un momento y vuelve a intentarlo.";
     public const string PasswordResetSent = "Si el correo corresponde a una cuenta, te enviamos un enlace para restablecer la contraseña.";
     public const string PasswordResetOk = "Tu contraseña se restableció. Ya puedes iniciar sesión.";
     public const string PasswordResetInvalid = "El enlace para restablecer la contraseña no es válido o expiró.";

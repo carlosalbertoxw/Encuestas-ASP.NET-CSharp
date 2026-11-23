@@ -117,4 +117,18 @@ public class ViewModelValidationTests
         Assert.False(IsValid(new LoginViewModel { Email = "x", Password = "secreta1" }));
         Assert.False(IsValid(new LoginViewModel { Email = "a@b.co", Password = "" }));
     }
+
+    [Fact]
+    public void Los_mensajes_de_validacion_estan_en_español()
+    {
+        var model = new RegisterViewModel { Email = "no-es-correo", Password = "123", RePassword = "456" };
+        var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+            model, new System.ComponentModel.DataAnnotations.ValidationContext(model), results, validateAllProperties: true);
+
+        var messages = results.Select(r => r.ErrorMessage).ToList();
+        Assert.Contains("Ingresa un correo electrónico válido", messages);
+        Assert.Contains("Debe tener entre 6 y 50 caracteres", messages);
+        Assert.Contains("Las contraseñas no coinciden", messages);
+    }
 }

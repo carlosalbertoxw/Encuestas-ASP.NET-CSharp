@@ -26,8 +26,8 @@ public class PollController(IPollRepository polls, ILogger<PollController> logge
     {
         if (!ModelState.IsValid)
         {
-            TempData["Message"] = Messages.ValidationError;
-            return RedirectToAction("Index");
+            // Se vuelve a mostrar el formulario con lo escrito y el error de cada campo.
+            return View("Form", model);
         }
 
         TempData["Message"] = await polls.AddPollAsync(model.ToPoll(User.GetUserId())) ? Messages.PollSaved : Messages.PollSaveError;
@@ -45,10 +45,14 @@ public class PollController(IPollRepository polls, ILogger<PollController> logge
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(PollFormViewModel model)
     {
-        if (!ModelState.IsValid || model.Id < 1)
+        if (model.Id < 1)
         {
-            TempData["Message"] = Messages.ValidationError;
-            return RedirectToAction("Index");
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("Form", model);
         }
 
         TempData["Message"] = await polls.UpdatePollAsync(model.ToPoll(User.GetUserId())) ? Messages.PollUpdated : Messages.UpdateError;

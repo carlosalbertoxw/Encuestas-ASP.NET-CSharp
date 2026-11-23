@@ -1,58 +1,60 @@
 using Encuestas.Web.Services;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Encuestas.Tests;
 
-public sealed class AccountLockoutTests : IDisposable
+public class AccountLockoutTests
 {
-    private readonly MemoryCache _memory = new(new MemoryCacheOptions());
+    private readonly InMemoryAttemptCounterStore _store = new();
 
-    private AccountLockout Create() => new(_memory);
+    private AccountLockout Create() => new(_store);
 
-    public void Dispose() => _memory.Dispose();
-
-    [Fact]
-    public void No_bloquea_por_debajo_del_umbral()
+    private static async Task FailAsync(AccountLockout lockout, string email, int times)
     {
-        var lockout = Create();
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < times; i++)
         {
-            lockout.RecordFailure("a@b.c");
+            await lockout.RecordFailureAsync(email);
         }
-        Assert.False(lockout.IsLocked("a@b.c"));
     }
 
     [Fact]
-    public void Bloquea_al_alcanzar_el_umbral()
+    public async Task No_bloquea_por_debajo_del_umbral()
     {
         var lockout = Create();
-        for (var i = 0; i < 5; i++)
-        {
-            lockout.RecordFailure("a@b.c");
-        }
-        Assert.True(lockout.IsLocked("a@b.c"));
+        await FailAsync(lockout, "a@b.c", AccountLockout.MaxAttempts - 1);
+        Assert.False(await lockout.IsLockedAsync("a@b.c"));
     }
 
     [Fact]
-    public void Reset_limpia_el_contador()
+    public async Task Bloquea_al_alcanzar_el_umbral()
     {
         var lockout = Create();
-        for (var i = 0; i < 5; i++)
-        {
-            lockout.RecordFailure("a@b.c");
-        }
-        lockout.Reset("a@b.c");
-        Assert.False(lockout.IsLocked("a@b.c"));
+        await FailAsync(lockout, "a@b.c", AccountLockout.MaxAttempts);
+        Assert.True(await lockout.IsLockedAsync("a@b.c"));
     }
 
     [Fact]
-    public void Es_insensible_a_mayusculas_en_el_correo()
+    public async Task Reset_limpia_el_contador()
     {
         var lockout = Create();
-        for (var i = 0; i < 5; i++)
-        {
-            lockout.RecordFailure("Correo@Test.COM");
-        }
-        Assert.True(lockout.IsLocked("correo@test.com"));
+        await FailAsync(lockout, "a@b.c", AccountLockout.MaxAttempts);
+        await lockout.ResetAsync("a@b.c");
+        Assert.False(await lockout.IsLockedAsync("a@b.c"));
+    }
+
+    [Fact]
+    public async Task Es_insensible_a_mayusculas_en_el_correo()
+    {
+        var lockout = Create();
+        await FailAsync(lockout, "Correo@Test.COM", AccountLockout.MaxAttempts);
+        Assert.True(await lockout.IsLockedAsync("correo@test.com"));
+    }
+
+    [Fact]
+    public async Task El_bloqueo_caduca_al_terminar_la_ventana()
+    {
+        var lockout = Create();
+        await FailAsync(lockout, "a@b.c", AccountLockout.MaxAttempts);
+        _store.Now += AccountLockout.Window + TimeSpan.FromSeconds(1);
+        Assert.False(await lockout.IsLockedAsync("a@b.c"));
     }
 }

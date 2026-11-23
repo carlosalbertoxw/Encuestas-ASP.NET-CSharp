@@ -5,27 +5,21 @@ using Encuestas.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace Encuestas.Tests;
 
-public sealed class AuthServiceTests : IDisposable
+public sealed class AuthServiceTests
 {
     private const string Email = "usuario@test.com";
     private const string Password = "Secreta123";
 
     private readonly PasswordService _passwords = new();
-    private readonly MemoryCache _memory = new(new MemoryCacheOptions());
-    private readonly AccountLockout _lockout;
+    private readonly AccountLockout _lockout = new(new InMemoryAttemptCounterStore());
     private readonly FakeUserRepository _users = new();
     private readonly FakeAuthenticationService _auth = new();
-
-    public AuthServiceTests() => _lockout = new AccountLockout(_memory);
-
-    public void Dispose() => _memory.Dispose();
 
     private AuthService CreateService() =>
         new(_users, _passwords, _lockout, NullLogger<AuthService>.Instance);
@@ -62,7 +56,7 @@ public sealed class AuthServiceTests : IDisposable
         AddUser();
         for (var i = 0; i < 5; i++)
         {
-            _lockout.RecordFailure(Email);
+            await _lockout.RecordFailureAsync(Email);
         }
 
         var result = await CreateService().LoginAsync(CreateHttpContext(), Email, Password);
@@ -81,9 +75,9 @@ public sealed class AuthServiceTests : IDisposable
         // El intento fallido cuenta para el bloqueo: con 4 fallos más se alcanza el umbral de 5.
         for (var i = 0; i < 4; i++)
         {
-            _lockout.RecordFailure("nadie@test.com");
+            await _lockout.RecordFailureAsync("nadie@test.com");
         }
-        Assert.True(_lockout.IsLocked("nadie@test.com"));
+        Assert.True(await _lockout.IsLockedAsync("nadie@test.com"));
     }
 
     [Fact]
@@ -114,7 +108,7 @@ public sealed class AuthServiceTests : IDisposable
         var profile = AddUser();
         for (var i = 0; i < 4; i++)
         {
-            _lockout.RecordFailure(Email);
+            await _lockout.RecordFailureAsync(Email);
         }
 
         var result = await CreateService().LoginAsync(CreateHttpContext(), Email, Password);
@@ -130,9 +124,9 @@ public sealed class AuthServiceTests : IDisposable
         // El contador quedó en cero: 4 fallos nuevos no alcanzan el umbral de 5.
         for (var i = 0; i < 4; i++)
         {
-            _lockout.RecordFailure(Email);
+            await _lockout.RecordFailureAsync(Email);
         }
-        Assert.False(_lockout.IsLocked(Email));
+        Assert.False(await _lockout.IsLockedAsync(Email));
     }
 
     [Fact]

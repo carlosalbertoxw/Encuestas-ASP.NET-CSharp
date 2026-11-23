@@ -47,4 +47,21 @@ public class PasswordServiceTests
         Assert.Equal(PasswordVerificationOutcome.SuccessRehashNeeded,
             _service.Verify(legacyHash, "Secreta123"));
     }
+
+    [Fact]
+    public void Verify_señala_rehash_para_un_hash_con_menos_iteraciones()
+    {
+        // Mismo formato (Identity V3), pero con las 100 000 iteraciones por defecto de Identity.
+        var weakerHash = new PasswordHasher<object>().HashPassword(new object(), "Secreta123");
+
+        Assert.Equal(PasswordVerificationOutcome.SuccessRehashNeeded, _service.Verify(weakerHash, "Secreta123"));
+        Assert.Equal(PasswordVerificationOutcome.Success, _service.Verify(_service.Hash("Secreta123"), "Secreta123"));
+    }
+
+    [Fact]
+    public void VerifyAgainstDummy_no_falla_con_cualquier_contraseña()
+    {
+        _service.VerifyAgainstDummy("loquesea");
+        _service.VerifyAgainstDummy(string.Empty);
+    }
 }

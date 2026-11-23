@@ -1,10 +1,9 @@
 using Encuestas.Data;
-using Encuestas.Model;
+using Encuestas.Web.Infrastructure;
 using Encuestas.Web.Models;
 using Encuestas.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Encuestas.Web.Controllers;
 
@@ -13,16 +12,8 @@ namespace Encuestas.Web.Controllers;
 /// confirmación de correo, recuperación de contraseña y cierre de sesión. La gestión de la
 /// cuenta autenticada vive en <see cref="AccountController"/>.
 /// </summary>
-public class UserController(
-    IUserRepository users,
-    IPollRepository polls,
-    PasswordService passwords,
-    AuthService auth,
-    TokenService tokens,
-    IEmailSender email,
-    AppUrls urls,
-    SecurityStampCache stampCache,
-    ILogger<UserController> logger) : Controller
+public class UserController(IUserRepository users, IPollRepository polls, AuthService auth, AccountService accounts)
+    : Controller
 {
     /// <summary>Página de inicio: acceso/registro para visitantes, o perfil público si se pasa ?profile=.</summary>
     [HttpGet]
@@ -53,7 +44,7 @@ public class UserController(
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    [EnableRateLimiting("auth")]
+    [RateLimit(RateLimitPolicy.Auth)]
     public async Task<IActionResult> Login([Bind(Prefix = nameof(HomeViewModel.Login))] LoginViewModel model)
     {
         if (User.Identity!.IsAuthenticated)
@@ -85,7 +76,7 @@ public class UserController(
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    [EnableRateLimiting("auth")]
+    [RateLimit(RateLimitPolicy.Auth)]
     public async Task<IActionResult> Register([Bind(Prefix = nameof(HomeViewModel.Register))] RegisterViewModel model)
     {
         if (User.Identity!.IsAuthenticated)
@@ -98,13 +89,7 @@ public class UserController(
             return View("Index", new HomeViewModel { Register = model });
         }
 
-        var result = await users.CreateUserAsync(model.Email, passwords.Hash(model.Password), NewSecurityStamp());
-        if (result == RepositoryResult.Success && await users.GetProfileByEmailAsync(model.Email) is { } profile)
-        {
-            var link = urls.Absolute(Url.Action("ConfirmEmail", "User", new { token = tokens.CreateEmailConfirmationToken(profile.User.Id) })!);
-            await email.SendAsync(model.Email, "Confirma tu cuenta", EmailTemplates.Link("Para confirmar tu cuenta visita:", link));
-            logger.LogInformation("Cuenta nueva registrada: usuario {UserId}", profile.User.Id);
-        }
+        await accounts.RegisterAsync(model.Email, model.Password);
         // Se responde lo mismo exista o no el correo, para no revelar cuentas.
         ViewBag.Message = Messages.RegisterAcknowledged;
         return View("Index", new HomeViewModel());
@@ -114,18 +99,31 @@ public class UserController(
     [AllowAnonymous]
     public async Task<IActionResult> ConfirmEmail(string? token)
     {
-        var userId = token is null ? null : tokens.ValidateEmailConfirmationToken(token);
-        if (userId is null)
-        {
-            TempData["Message"] = Messages.EmailConfirmationInvalid;
-        }
-        else
-        {
-            await users.ConfirmEmailAsync(userId.Value);
-            logger.LogInformation("Correo confirmado para el usuario {UserId}", userId.Value);
-            TempData["Message"] = Messages.EmailConfirmed;
-        }
+        TempData["Message"] = token is not null && await accounts.ConfirmEmailAsync(token)
+            ? Messages.EmailConfirmed
+            : Messages.EmailConfirmationInvalid;
         return RedirectToAction("Index");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult ResendConfirmation() => View(new ResendConfirmationViewModel());
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    [RateLimit(RateLimitPolicy.Auth)]
+    public async Task<IActionResult> ResendConfirmation(ResendConfirmationViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        await accounts.ResendConfirmationAsync(model.Email);
+        // Mensaje genérico para no revelar si el correo existe ni si ya estaba confirmado.
+        ViewBag.Message = Messages.ConfirmationResent;
+        return View(new ResendConfirmationViewModel());
     }
 
     [HttpGet]
@@ -135,7 +133,7 @@ public class UserController(
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    [EnableRateLimiting("auth")]
+    [RateLimit(RateLimitPolicy.Auth)]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
         if (!ModelState.IsValid)
@@ -143,14 +141,7 @@ public class UserController(
             return View(model);
         }
 
-        if (await users.GetProfileByEmailAsync(model.Email) is { } profile)
-        {
-            var token = tokens.CreatePasswordResetToken(profile.User.Id, profile.User.SecurityStamp);
-            var link = urls.Absolute(Url.Action("ResetPassword", "User", new { token })!);
-            await email.SendAsync(model.Email, "Restablece tu contraseña",
-                EmailTemplates.Link("Para restablecer tu contraseña visita:", link));
-            logger.LogInformation("Enlace de restablecimiento generado para el usuario {UserId}", profile.User.Id);
-        }
+        await accounts.RequestPasswordResetAsync(model.Email);
         // Mensaje genérico para no revelar si el correo existe.
         ViewBag.Message = Messages.PasswordResetSent;
         return View(new ForgotPasswordViewModel());
@@ -160,7 +151,7 @@ public class UserController(
     [AllowAnonymous]
     public IActionResult ResetPassword(string? token)
     {
-        if (token is null || tokens.ValidatePasswordResetToken(token) is null)
+        if (token is null || !accounts.IsPasswordResetTokenValid(token))
         {
             ViewBag.Message = Messages.PasswordResetInvalid;
             return View(new ResetPasswordViewModel());
@@ -171,7 +162,7 @@ public class UserController(
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    [EnableRateLimiting("auth")]
+    [RateLimit(RateLimitPolicy.Auth)]
     public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
     {
         if (!ModelState.IsValid)
@@ -179,24 +170,18 @@ public class UserController(
             return View(model);
         }
 
-        // El token incluye el sello de seguridad: si no coincide con el actual, ya se usó o caducó.
-        if (tokens.ValidatePasswordResetToken(model.Token) is not { } valid
-            || await users.GetSecurityStampAsync(valid.UserId) != valid.SecurityStamp)
+        switch (await accounts.ResetPasswordAsync(model.Token, model.NewPassword))
         {
-            ViewBag.Message = Messages.PasswordResetInvalid;
-            return View(model);
+            case ResetPasswordResult.Success:
+                TempData["Message"] = Messages.PasswordResetOk;
+                return RedirectToAction("Index");
+            case ResetPasswordResult.InvalidToken:
+                ViewBag.Message = Messages.PasswordResetInvalid;
+                return View(model);
+            default:
+                ViewBag.Message = Messages.UpdateError;
+                return View(model);
         }
-
-        if (await users.ChangePasswordAsync(valid.UserId, passwords.Hash(model.NewPassword), NewSecurityStamp()) == RepositoryResult.Success)
-        {
-            stampCache.Invalidate(valid.UserId);
-            logger.LogInformation("Contraseña restablecida para el usuario {UserId}", valid.UserId);
-            TempData["Message"] = Messages.PasswordResetOk;
-            return RedirectToAction("Index");
-        }
-
-        ViewBag.Message = Messages.UpdateError;
-        return View(model);
     }
 
     [HttpPost]
@@ -207,6 +192,4 @@ public class UserController(
         await auth.SignOutAsync(HttpContext);
         return RedirectToAction("Index");
     }
-
-    internal static string NewSecurityStamp() => Guid.NewGuid().ToString();
 }
